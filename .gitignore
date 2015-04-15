@@ -1,0 +1,17 @@
+**.swp
+**.swo
+**.jar
+**.class
+**.#**
+.nrepl-history
+pom.xml
+pom.xml.asc
+figwheel_server.log
+/target
+/classes
+/checkouts
+/.lein-*
+/.nrepl-port
+/resources/public/js
+/out
+/.repl
