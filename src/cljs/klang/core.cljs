@@ -1,5 +1,4 @@
 (ns klang.core
-  ;;(:refer-clojure :exclude [reset!]);; We want our own reset!
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
    [cljs.core.async.macros :refer [go-loop go]])
@@ -11,13 +10,10 @@
    [cljsjs.highlight.langs.clojure]
    ;;[cljsjs.highlight.langs.json]
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
-                            tap close! pub sub timeout]]
-   ;; Google Closure
+                            tap close! pub sub timeout take!]]
+   ;; Google Closure libs:
    [goog.dom :as dom]
    ))
-
-;; General:
-;; Actions with namespaces keywords are kind of private.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
@@ -34,7 +30,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Dev doc:
-;; TODO: Move freeze-ch to action channel
 ;; TODO: Make (logger) a macro which only generates code for certain levels?
 ;; Or should the user create that macro?
 ;; Clicking on a namespace should create a transducer with the same key and
@@ -68,8 +63,6 @@
    :actions-pub-ch nil
    :actions-sub-ch nil
    ;;;;;;;;;;;;;; View stuff
-   ;; If we can put some stuff on the console
-   :quiet false
    ;; If we're displaying the overlay or not
    :showing false
    ;; THe amount of logs we will buffer while frozen before discarding
@@ -143,10 +136,7 @@
 (defn log-console
   "Logs a string to the console"
   [s]
-  ;; Don't accept db in this case. If we shall be quiet we're in single mode
-  ;; anyways very likely
-  (when-not (:quiet @*db*)
-    (.log js/console (str s)))
+  (js/console.log (str s))
   s)
 
 ;; Watch out for:
@@ -252,7 +242,7 @@
 (defn render-tab-item
   "Renders a tab item on the left menu. A filter (keyword) typically."
   [db tab]
-  {:pre [(keyword? tab)  #_(log-console "render-tab-item")]}
+  {:pre [(keyword? tab)]}
   [:li {:style {:color (condp = (:showing-tab @db)
                          tab "white"
                          "grey")
@@ -261,8 +251,6 @@
    (str tab)
    ;; Also display the current search term for the tab as a subscript:
    [:sub (str "/" (get-in @db [:tabs tab :search] ""))]])
-
-(defonce xxy (atom {}))
 
 (defn render-overlay
   [db]
@@ -316,10 +304,7 @@
                              :y (.. % -target -scrollTop)})}
       ;; First filter the elements for the current tab:
       ;; TODO: This is run every time if we scroll. Optimize.
-      (let [logs (get-in @db [:tabs (:showing-tab @db) :logs])]
-        (log-console (str "Prev and current identical: " (identical? @xxy logs)))
-        (reset! xxy logs)
-        [render-logs logs])
+      [render-logs (get-in @db [:tabs (:showing-tab @db) :logs])]
       ]]))
 
 (defn get-dom-el
@@ -375,6 +360,13 @@
       ensure-msg-vec
       ensure-timed))
 
+(defn single-transduce
+  "Takes a transducer (xform) and an item and applies the transducer to the
+  singe element and returnes the transduced item. Note: No reducing is
+  involved. Returns nil if there was no result."
+  [xform x]
+  ((xform (fn[_ r] r)) nil x))
+
 (defn ch->logs!
   "Taps into the mult chan of the db and pushed the log event into the logs
   atom when a log event is received."
@@ -397,7 +389,8 @@
           ;; Put the log event into the db
           (action! db :new-log
                    (log+rules
-                    db (first (into [] transd [v])))))
+                    ;; TODO: Use transduce here instead
+                    db (single-transduce transd v))))
         (recur (and (= ch freeze-ch) v))))))
 
 
@@ -492,7 +485,7 @@
                     (search-transducer db tab)
                     (get-in @db [:tabs tab :transducers]))
           ;; A hack: Run a transducer on a single element and pick out the elem
-          data-td (first (into [] td [data]))
+          data-td (single-transduce td data)
           kork [:tabs tab :logs]]
       ;; Don't swap if it's empty. Doh
       (when-not (empty? data-td) 
@@ -505,6 +498,7 @@
   {:pre [(keyword? tab)]}
   (let [td (apply comp
                   (search-transducer db tab)
+                  ;;(take 100) ;; Todo: Implement take etc with scroll position
                   (get-in @db [:tabs tab :transducers]))
         ;; Run the transducers on all global logs in :logs
         data-td (into [] td (:logs @db))
@@ -554,8 +548,7 @@
   (let [action-ch (chan 37)]
     (tap (:actions-sub-ch @db) action-ch)
     (go-loop []
-      (let [ev (<! action-ch)]
-        (handle-action db ev))
+      (handle-action db (<! action-ch))
       (recur))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -680,7 +673,7 @@
 
 
 #_(defn figwheel-reload []
-  (demo!))
+    (demo!))
 
 
 ;; (show! *db*)
@@ -823,13 +816,13 @@
 (def gen-logs
   (delay
    (go-loop [i 0]
-     (<! (timeout 1000))
+     (<! (timeout 100))
      (log! ::INFO {:gen i})
      ;;(l i)
      (recur (+ i 1)))))
 
 ;; Dered me to generate logs and test freezing
-;;@gen-logs
+;; @gen-logs
 
 
 ;; These will log to the console
@@ -847,7 +840,6 @@
   (lg {:test "tw sdf asd f asdf   a sdfaaaa aaaaaaas dfooo"
        :foo nil
        :this :should :really ['wrap 'around "on your small browser window"]}))
-
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -4,11 +4,15 @@
   `(when ~(with-meta 'js/goog.DEBUG assoc :tag 'boolean)
      ~@exprs))
 
-#_(defmacro elider!
-    [transducer]
-    ())
+;; Transducers require clj1.7
+;;(defonce td (atom [(filter (fn[_] false))]))
+
+(defmacro elider!
+  [transducer]
+  )
 
 #_(defmacro deflogger [logger level]
-  `(defn ~logger [& msg] (klang.core/log ~level ~@msg))
+  ;;(if)
+  `(defn ~logger [& msg] (klang.core/log! ~level msg))
   )
 
