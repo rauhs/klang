@@ -5,14 +5,23 @@
      ~@exprs))
 
 ;; Transducers require clj1.7
-;;(defonce td (atom [(filter (fn[_] false))]))
+(defonce xforms (atom [(filter (fn[_] false))]))
 
-(defmacro elider!
+(defn single-transduce
+  "Takes a transducer (xform) and an item and applies the transducer to the
+  singe element and returnes the transduced item. Note: No reducing is
+  involved. Returns nil if there was no result."
+  [xform x]
+  ((xform (fn[_ r] r)) nil x))
+
+(defmacro elide!
   [transducer]
+  ;;(swap)
   )
 
-#_(defmacro deflogger [logger level]
-  ;;(if)
-  `(defn ~logger [& msg] (klang.core/log! ~level msg))
-  )
+(defmacro deflogger [logger level]
+  (if (single-transduce (apply comp @xforms) level)
+    `(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
+    `(~'defn ~logger [& ~'msg])
+    ))
 

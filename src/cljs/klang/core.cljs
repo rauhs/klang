@@ -1,6 +1,7 @@
 (ns klang.core
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
+   [klang.core :refer [deflogger] :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]
@@ -840,6 +841,15 @@
   (lg {:test "tw sdf asd f asdf   a sdfaaaa aaaaaaas dfooo"
        :foo nil
        :this :should :really ['wrap 'around "on your small browser window"]}))
+
+
+;; macros
+
+(l  (macroexpand-1 '(deflogger hmm ::EYE)))
+
+(deflogger hmm ::EYE)
+
+(hmm :msg)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
