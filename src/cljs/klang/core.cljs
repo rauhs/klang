@@ -262,6 +262,8 @@
    ;; Also display the current search term for the tab as a subscript:
    [:sub (str "/" (get-in @db [:tabs tab :search] ""))]])
 
+(defonce xxy (atom {}))
+
 (defn render-overlay
   [db]
   (when (:showing @db)
@@ -314,7 +316,10 @@
                              :y (.. % -target -scrollTop)})}
       ;; First filter the elements for the current tab:
       ;; TODO: This is run every time if we scroll. Optimize.
-      [render-logs (get-in @db [:tabs (:showing-tab @db) :logs])]
+      (let [logs (get-in @db [:tabs (:showing-tab @db) :logs])]
+        (log-console (str "Prev and current identical: " (identical? @xxy logs)))
+        (reset! xxy logs)
+        [render-logs logs])
       ]]))
 
 (defn get-dom-el
@@ -824,7 +829,7 @@
      (recur (+ i 1)))))
 
 ;; Dered me to generate logs and test freezing
-;; @gen-logs
+;;@gen-logs
 
 
 ;; These will log to the console
