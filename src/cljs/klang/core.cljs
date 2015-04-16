@@ -845,11 +845,17 @@
 
 ;; macros
 
-(l  (macroexpand-1 '(deflogger hmm ::EYE)))
 
-(deflogger hmm ::EYE)
+(macros/elide! (filter #(= % ::YEAHH)))
 
-(hmm :msg)
+(deflogger hmm ::YEAHH)
+
+(l (macroexpand-1 '(deflogger hmm ::YEAHH)))
+
+(deflogger nope :NOPEE)
+
+(hmm :YEAHH)
+(nope :NOPEE)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

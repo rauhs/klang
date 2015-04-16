@@ -67,8 +67,14 @@
                      :output-dir    "resources/public/js/out"
                      :asset-path   "js/out"
                      :optimizations :none
-                     :pretty-print  true}}}}
-
+                     :pretty-print  true}}
+    :prod {:source-paths ["src/cljs"]
+           :compiler {:output-to     "resources/public/cljs/production/app.js"
+                      :output-dir    "resources/public/cljs/production/out"
+                      :asset-path   "js/out"
+                      :output-wrapper false
+                      :optimizations :advanced
+                      :pretty-print  false}}}}
   :profiles
   {:dev
    {:repl-options {:init-ns klang.dev
