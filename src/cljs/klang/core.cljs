@@ -15,7 +15,10 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
-   ))
+   )
+  (:import 
+   [goog.ui KeyboardShortcutHandler])
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
@@ -293,7 +296,7 @@
        [:a {:style
             {:cursor "pointer"
              :color (if (:frozen @db) "orange" "green")}
-            :on-click (fn[e] (action! db :toggle-freeze))}
+            :on-click (fn[e] (action! db :freeze.toggle))}
         (if (:frozen @db) "Thaw" "Freeze")]]
       ]
      ;;;;;;;;;; The main logs ;;;;;;;;;
@@ -438,8 +441,19 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Action management
 
-(defn action!
-  "Sends an action on the event bus"
+(defmulti action!
+  "Sends an action on the event bus. First argument can either be the
+  action or the db atom.
+  Ex:
+  (action! :show)
+  (action! db :show)"
+  (fn [db_or_action & _] (keyword? db_or_action)))
+
+(defmethod action! true
+  [action & ev]
+  (apply action! *db* action ev))
+
+(defmethod action! false
   [db action & ev]
   (put! (:actions-pub-ch @db)
         {:action action
@@ -460,6 +474,10 @@
   {:pre [(keyword? tab)]}
   (swap! db assoc-in [:tabs tab :scroll-top] y))
 
+(defmethod handle-action :show.toggle
+  [db ev]
+  (action! db (if (:showing @db) :hide :show)))
+
 (defmethod handle-action :show
   [db ev]
   (swap! db assoc :showing true))
@@ -475,9 +493,9 @@
   [db tab-kw]
   (let [candidates (map #(->> % (str (name tab-kw))
                               keyword)
-                        (range))
-        existing (set  (keys (:tabs @db)))]
-    (first (filter #(do (log-console %) (not (contains? existing %))) candidates))))
+                        (range)) ;; lazy
+        existing (set (keys (:tabs @db)))]
+    (first (filter #(not (contains? existing %)) candidates))))
 
 (defmethod handle-action :clone-tab
   [db _]
@@ -485,7 +503,6 @@
     (swap! db assoc-in
            [:tabs (cloned-tab-name db tab)]
            (get-in @db [:tabs tab]))))
-
 
 (defmethod handle-action :switch-tab
   [db {tab :data}]
@@ -541,7 +558,7 @@
   ;; We have to recalculate the :logs of the tab:
   (action! db :recalc-tab-logs tab))
 
-(defmethod handle-action :toggle-freeze
+(defmethod handle-action :freeze.toggle
   [db _]
   (action! db (if (:frozen @db)
                 :thaw
@@ -570,7 +587,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; API
-;; TODO: Offer (toggle-{freeze,show}) functions?
 
 (defn freeze!
   "Makes the logger pause streaming logs. The logs will be buffered to up to
@@ -641,10 +657,9 @@
   (reset! *db* (new-db)))
 
 (defn init!
-  "Init function. Idempotent. Safe to call multiple times. WARNING: It
-  will re-init all channels so you'll have to re-listen to them. If
-  you want to set freeze-buffer you need to set it before and pass in
-  the db."
+  "It will re-init all channels so you'll have to re-listen to them.
+  If you want to set freeze-buffer you need to set it before and pass
+  in the db."
   ([] (init! *db*))
   ([db]
    (some-> (:log-pub-ch @db) close!) ;; Close previous channel if there is one
@@ -664,13 +679,33 @@
    (ch->logs! db) ;; Start the go loop which puts in the logs
    (log-console "Klang: Logging initialized.")))
 
+(defn install-shortcut!
+  "Installs a Keyboard Shortcut handler that show/hide the log overlay."
+  [db]
+  (let [handler (new KeyboardShortcutHandler js/window)]
+    (.registerShortcut handler "klang.toggle" "l")
+    (.listen goog.events
+             handler
+             KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
+             (fn[e] ;; e.identifier will be "toggle-klang"
+               (action! db :show.toggle)))
+    (swap! db assoc :shortcut-handler handler) ;; Needed to unregister it.
+    (log-console "Klang: Keyboard shortcut installed.")))
+
+(defn uninstall-shortcut!
+  ""
+  [db]
+  (.unregisterShortcut (:shortcut-handler @db) "l"))
+
+
 (defn default-config!
-  "Idempotent. Sets up key presses and some default tabs."
+  "Sets up key presses and some default tabs."
   ;; Add highlight renderer,
   ;; error -> red etc
   ([] (default-config! *db*))
-  ([db])
-  )
+  ([db]
+   (install-shortcut! db)
+   ))
 
 ;;(defonce rule-update-snapshot (add-watch ))
 
@@ -689,12 +724,7 @@
 (def l log-console)
 
 (demo!)
-
-
-
-#_(defn figwheel-reload []
-    (demo!))
-
+(default-config!)
 
 ;; (show! *db*)
 ;; (hide! *db*)
@@ -775,10 +805,6 @@
   [db ns* color]
   (pred->color db (fn [ns] (or (= ns* ns) (parent? ns* ns))) :ns color))
 
-(defn pred?->console
-  "Also dumps all logs for which pred? returns true to the console with %O."
-  [db pred?])
-
 (defn msg->console!
   "Registers a listener to the log channel which will --in addition to
   logging it-- also output the :msg to the console with %O.
@@ -813,11 +839,12 @@
 (ns*->color *db* "my.ns" "darkred")
 (msg->console! *db* :CONSOLE)
 (tab->type! *db* :error :ERROR :WARNING)
-
-;;(action! *db* :foo)
-
 ;; Or if we want multiple:
 ;; (tab->transducer! *db* :my.ns (filter #(self-or-parent? "my.ns" (:ns %))))
+
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Log some:
 
 (doseq [x (range 30)
         :let [lg {:msg (str "Log msg " (* x 1))
@@ -864,16 +891,15 @@
 
 ;; macros
 
-
 (macros/elide! (filter #(= % ::YEAHH_LOGGER)))
 
 (deflogger hmm ::YEAHH_LOGGER)
-
 (deflogger nope ::NOPEE_LOGGER)
 
 (hmm :YEAHH)
-(nope "NOPEE_LOG_ME")
-(nope :NOPEE_LOG_ME_TOO)
+
+(nope "NOPE dont log me")
+(nope "DONT LOG ME")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
