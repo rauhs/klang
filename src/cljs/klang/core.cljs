@@ -412,6 +412,7 @@
   Does a full text search on time, namespace, level and message.
   The format is like:
   11:28:27.793 my.ns/INFO [\"Log msg 0\"]"
+  ;; TODO: Fuzzy sear
   ([db] (search-transducer db (:showing-tab @db)))
   ([db tab]
    (filter (fn[lg-ev]
@@ -435,8 +436,8 @@
                )))))
 
 (defn register-transducer!
-  [db key td]
-  (action! db :register-transducer {:key key :fn td}))
+  [db key transducer]
+  (action! db :register-transducer {:key key :fn transducer}))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Action management
@@ -623,19 +624,26 @@
    ;; Will never block due to dropping buffer
    (put! (:log-pub-ch @db) lg-ev)))
 
-(defn log!
+(defmulti log!
   "Logs a message msg for namespace and level ns_level.
   Eg:
   (log ::WARN :server-down)
+  (log db ::WARN :server-down)
   (log :bouncer.core/INFO :server-spotted)"
-  ([ns_level msg] (log! *db* ns_level msg))
-  ([db ns_level & msg]
-   ;; Even though we could let the time be added later we do it right here to
-   ;; have an accurate time
-   (raw-log! db {:time (t/time-now)
-                 :type (keyword (name ns_level)) ;; name make ::FOO -> "FOO"
-                 :ns (namespace ns_level) ;;  Ends up a string.
-                 :msg (vec msg)})))
+  (fn [db_or_nslevel & _] (keyword? db_or_nslevel)))
+
+(defmethod log! true
+  [ns_level & msg]
+  (apply log! *db* ns_level msg))
+
+(defmethod log! false
+  [db ns_level & msg]
+  ;; Even though we could let the time be added later we do it right here to
+  ;; have an accurate time
+  (raw-log! db {:time (t/time-now)
+                :type (keyword (name ns_level)) ;; name make ::FOO -> "FOO"
+                :ns (namespace ns_level) ;;  Ends up a string.
+                :msg (vec msg)}))
 
 (defn logger
   "Creates a new logger with the keyword `ns_level'. The keyword ns_level is
@@ -681,9 +689,10 @@
 
 (defn install-shortcut!
   "Installs a Keyboard Shortcut handler that show/hide the log overlay."
-  [db]
+  [db keys]
+  (swap! db assoc :shortcut-keys keys)
   (let [handler (new KeyboardShortcutHandler js/window)]
-    (.registerShortcut handler "klang.toggle" "l")
+    (.registerShortcut handler "klang.toggle" (:shortcut-keys @db))
     (.listen goog.events
              handler
              KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
@@ -695,54 +704,24 @@
 (defn uninstall-shortcut!
   ""
   [db]
-  (.unregisterShortcut (:shortcut-handler @db) "l"))
-
-
-(defn default-config!
-  "Sets up key presses and some default tabs."
-  ;; Add highlight renderer,
-  ;; error -> red etc
-  ([] (default-config! *db*))
-  ([db]
-   (install-shortcut! db)
-   ))
-
-;;(defonce rule-update-snapshot (add-watch ))
+  (.unregisterShortcut (:shortcut-handler @db) (:shortcut-keys @db)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; For development
-(defn demo!
-  []
-  (init-single-mode!) ;; Sets *db*
-  (init!)
-  (default-config!)
-  (show!)
-  (r/render [render-overlay *db*] (get-dom-el))
-  *db*)
-
-;; Alias
-(def l log-console)
-
-(demo!)
-(default-config!)
-
-;; (show! *db*)
-;; (hide! *db*)
-;; (freeze! *db*)
-;; (thaw! *db*)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functionality thru standard API:
 
-(register-transducer!
- *db* :time-formatter
- (map
-  (fn [x]
-    (update-in
-     x [:render :time] conj
-     (fn [m]
-       [:span
-        (tf/unparse (:hour-minute-second-ms tf/formatters) m)])))))
+(defn sensible-time-format
+  "Installs a transducer to format the time"
+  [db]
+  (register-transducer!
+   db :time-formatter
+   (map
+    (fn [x]
+      (update-in
+       x [:render :time] conj
+       (fn [m]
+         [:span
+          (tf/unparse (:hour-minute-second-ms tf/formatters) m)]))))))
 
 (defn hl-clj-str
   "Returns a string containing HTML that highlights the message. Takes a string
@@ -762,7 +741,8 @@
 
 (defn register-highlighter!
   "Registeres a transducer :highlight-msg that highlights the :msg of
-  log. Uses js->clj to ensure the :msg is cojure."
+  log. Uses js->clj to ensure the :msg is cojure.
+  TODO: We should highlight functions as javascript and not clojure!"
   [db]
   (register-transducer!
    db :highlight-msg
@@ -777,29 +757,33 @@
 ;; TODO: Also highlight all namespaces with a smart method?
 ;; For instance all parents vs childs have stronger colors...
 ;; How to define a tree of colors such that they're similar yet different?
-;; Hmm, sounds like a coloring problem??
+;; Sounds like a coloring problem??
 
 (defn pred->color
   "Given a predicate pred? and which (:ns, :type) it wraps the part of
-  the log message in a span and applies the color."
+  the log message in a span and applies the color.
+  Note that if you get an error here saying that name doesn't support
+  some hiccup markup. Then you've nested your coloring. Which is
+  possible but you'll have to take care of this in a special hand
+  crafted transducer. (Not here)"
   [db pred? which color]
-  {:pre [(or (= :ns which) (= :type which))]}
+  {:pre [(keyword? which) (or (= :ns which) (= :type which))]}
   (register-transducer!
    db (keyword (make-random-uuid))
    (map
-    (fn [x]
-      (if (pred? (which x)) ;; pluck out :ns or :type
-        (update-in x
+    (fn [msg]
+      (if (pred? (which msg)) ;; pluck out :ns or :type
+        (update-in msg
                    [:render which] conj
                    (fn [t] ;; Special render function.
                      [:span {:style {:color color}}
                       (name t)])) ;; name for :ns & :type
-        x)))))
+        msg)))))
 
 (defn type->color
   "Given a type keyword (like :INFO), render the type in color."
   [db type color]
-  (pred->color db #(= type %) :type color))
+  (pred->color db (partial = type) :type color))
 
 (defn ns*->color
   "Gives all namespaces that are children of ns* a color."
@@ -821,7 +805,7 @@
         ;; This logs the object to the console an allow it to inspect.
         ;; Chrome only?
         (when (= (:type lg) type)
-          (.log js/console "%O" (:msg lg))))
+          (.log js/console "%s/%s %O" (:ns lg) (name (:type lg)) (:msg lg))))
       (recur))))
 
 (defn tab->transducer!
@@ -849,46 +833,67 @@
                                          (fn[ns] (= ns (:ns %)))
                                          namespaces))))
 
-;; OLD:
-#_(defn tab->ns!
-  [db tab-key & namespaces]
-  (tab->transducer! db tab-key (filter #(contains?
-                                         (set namespaces)
-                                         (:ns %)))))
+(defn color-types! [db]
+  (type->color db :INFO "lightblue")
+  (type->color db :ERROR "red")
+  (type->color db :TRACE "gray")
+  (type->color db :WARN "orange"))
 
-
-(register-highlighter! *db*)
-(type->color *db* :INFO "lightblue")
-(type->color *db* :ERROR "red")
-(type->color *db* :TRACE "gray")
-(type->color *db* :WARN "orange")
-;;(ns*->color *db* "my.ns" "darkred")
-(msg->console! *db* :CONSOLE)
-(tab->type! *db* :error :ERROR)
-(tab->type! *db* :errwarn :ERROR :WARN)
-(tab->ns! *db* :my.ns "my.ns")
-(tab->ns*! *db* :my.ns* "my.ns")
-;; Or if we want multiple:
-;; (tab->transducer! *db* :my.ns (filter #(self-or-parent? "my.ns" (:ns %))))
-
-(log! *db* ::WARN :hi :there)
+(defn default-config!
+  "Sets up key presses and some default tabs."
+  ;; Add highlight renderer,
+  ;; error -> red etc
+  ([] (default-config! *db*))
+  ([db]
+   (color-types! db) ;; This errors and I don't know why
+   (install-shortcut! db "l")
+   (register-highlighter! db)
+   (sensible-time-format db)
+   (r/render [render-overlay db] (get-dom-el))
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Log some:
+;; For development
+(defn ex-log-data []
+  (ns*->color *db* "klang.core" "yellow")
+  (tab->type! *db* :error :ERROR)
+  (tab->type! *db* :errwarn :ERROR :WARN)
+  (tab->ns! *db* :my.ns "my.ns")
+  (tab->ns*! *db* :my.ns* "my.ns")
+  (msg->console! *db* :CONSOLE)
 
-(doseq [x (range 30)
-        :let [lg {:msg (str "Log msg " (* x 1))
-                  :type :INFO
-                  :ns "my.ns"}]]
-  ;; Will receive a time for the channel listener
-  (raw-log! *db* lg))
+  (doseq [x (range 30)
+          :let [lg {:msg (str "Log msg " (* x 1))
+                    :type :INFO
+                    :ns "my.ns"}]]
+    ;; Will receive a time for the channel listener
+    (raw-log! *db* lg))
 
-(doseq [x (range 30)
-        :let [lg {:msg (str "Log msg " (* x 1))
-                  :type :INFO
-                  :ns "my.ns.one"}]]
-  ;; Will receive a time for the channel listener
-  (raw-log! *db* lg))
+  (doseq [x (range 30)
+          :let [lg {:msg (str "Log msg " (* x 1))
+                    :type :TRACE
+                    :ns "my.ns.one"}]]
+    ;; Will receive a time for the channel listener
+    (raw-log! *db* lg))
+  ;; These will log to the console
+  (let [lg (logger ::CONSOLE)]
+    (lg {:test "foo"} :bar :haha))
+
+  (let [lg (logger ::ERROR)]
+    (lg {:test "foo"} :bar :haha)
+    (lg {:test "twooo"}))
+
+  (log! ::WARN :warning :you "--")
+
+  (let [lg (logger ::ERROR)]
+    (lg {:test "foo"} :bar :haha)
+    (lg nil)
+    (lg :function  (fn[_] (map :foo)))
+    ;; Long message should wrap
+    (lg :test "This is a longer test message so we can see wrapping it around."
+        :nil=also-works nil
+        nil 'symbols 'also 'work
+        :this :should :really ["wrap" :around "on your small browser window"])))
 
 (def gen-logs
   (delay
@@ -898,46 +903,39 @@
      ;;(l i)
      (recur (+ i 1)))))
 
-;; Deref me to generate logs and test freezing
+(defn demo!
+  []
+  (init-single-mode!) ;; Sets *db*
+  (init!)
+  (default-config!)
+  (show!)
+  (ex-log-data))
+
+;; Alias
+(def l log-console)
+
+(demo!)
+
+;; Deref to generate logs
 ;; @gen-logs
 
 
-;; These will log to the console
-#_(let [lg (logger ::CONSOLE)]
-    (lg {:test "foo"} :bar :haha))
-
-(let [lg (logger ::ERROR)]
-  (lg {:test "foo"} :bar :haha)
-  (lg {:test "twooo"}))
-
-;;(log! )
-
-(let [lg (logger ::ERROR)]
-  (lg {:test "foo"} :bar :haha)
-  (lg nil)
-  ;; Long message should wrap
-  (lg {:test "tw sdf asd f asdf   a sdfaaaa aaaaaaas dfooo"
-       :foo nil
-       :this :should :really ['wrap 'around "on your small browser window"]}))
-
-
-;; macros
-
-(macros/elide! (filter #(= % ::YEAHH_LOGGER)))
-
-(deflogger hmm ::YEAHH_LOGGER)
-(deflogger nope ::NOPEE_LOGGER)
-
-(hmm :YEAHH)
-
-(nope "NOPE dont log me")
-(nope "DONT LOG ME")
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RDD
 (comment
+
+  (macros/elide! (filter #(= % ::YEAHH_LOGGER)))
+
+  (deflogger hmm ::YEAHH_LOGGER)
+  (deflogger nope ::NOPEE_LOGGER)
+
+  (hmm :YEAHH)
+
+  (nope "NOPE dont log me")
+  (nope "DONT LOG ME")
 
   (l (macroexpand-1 '(deflogger hmm ::YEAHH)))
 
@@ -949,12 +947,6 @@
   (def my-lg3 (k/logger :my.other.ns/DEBUG))
   (k/log ::INFO {:my :event})
   
-  
-  
-
-  (l (filter :type  ex-logs))
-  
-  (l (str (t/time-now)))
 
   ;; :hour-minute-second-ms : 11:02:23.009
   ;; :time  : 11:01:56.611-04:00
@@ -963,17 +955,5 @@
   (l (tf/unparse :time (t/time-now) ))
   
   (l  (filter #(:fo %)))
-
-
-  ;; Design notes:
-  ;; - Centralized logger channel
-  ;; - Attaches following data:
-  ;;   o Time
-  ;;   o namespace
-  ;;   o event
-  ;; - Filter/process by:
-  ;;   o namespace
-  ;;   o string
-  ;;   o time?
 
   )

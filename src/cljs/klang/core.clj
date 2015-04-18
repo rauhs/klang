@@ -4,7 +4,6 @@
   `(when ~(with-meta 'js/goog.DEBUG assoc :tag 'boolean)
      ~@exprs))
 
-;; Transducers require clj1.7
 (defonce xforms (atom [(filter (constantly true))]))
 
 (defn single-transduce
@@ -34,7 +33,7 @@
   ;;`(~'defmacro ~logger [& ~'_] )
   ;;`(~'defn ~logger [& ~'_])
   (if (single-transduce (apply comp @xforms) level)
-      `(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
+      `(~'defn ~logger [& ~'msg] (apply klang.core/log! ~level ~'msg))
       ;;`(~'defn ~logger [& ~'msg])
       ;; Closure compiler will elide this useless function:
       `(~'defn ~logger [& ~'msg])
