@@ -911,11 +911,8 @@
   (show!)
   (ex-log-data))
 
-;; Alias
-(def l log-console)
 
-(demo!)
-
+;; (demo!)
 ;; Deref to generate logs
 ;; @gen-logs
 
@@ -926,6 +923,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RDD
 (comment
+
+  ;; Alias
+  (def l log-console)
 
   (macros/elide! (filter #(= % ::YEAHH_LOGGER)))
 
