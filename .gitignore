@@ -13,5 +13,6 @@ figwheel_server.log
 /.lein-*
 /.nrepl-port
 /resources/public/js
+/resources/public/cljs
 /out
 /.repl

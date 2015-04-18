@@ -7,7 +7,8 @@
   :source-paths ["src/clj" "src/cljs"]
 
   :dependencies [;; CORE
-                 [org.clojure/clojure "1.6.0"]
+                 ;;[org.clojure/clojure "1.6.0"]
+                 [org.clojure/clojure "1.7.0-beta1"]
                  [org.clojure/tools.nrepl "0.2.10"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/clojurescript "0.0-3196" :scope "provided"]
@@ -66,8 +67,22 @@
                      :output-dir    "resources/public/js/out"
                      :asset-path   "js/out"
                      :optimizations :none
-                     :pretty-print  true}}}}
-
+                     :pretty-print  true}}
+    :prod_debug {:source-paths ["src/cljs"]
+           :compiler {:output-to     "resources/public/cljs/production_debug/app.js"
+                      :output-dir    "resources/public/cljs/production_debug/out"
+                      :asset-path   "js/out"
+                      :output-wrapper false
+                      :pseudo-names true
+                      :optimizations :advanced
+                      :pretty-print  true}}
+    :prod {:source-paths ["src/cljs"]
+           :compiler {:output-to     "resources/public/cljs/production/app.js"
+                      :output-dir    "resources/public/cljs/production/out"
+                      :asset-path   "js/out"
+                      :output-wrapper false
+                      :optimizations :advanced
+                      :pretty-print  false}}}}
   :profiles
   {:dev
    {:repl-options {:init-ns klang.dev

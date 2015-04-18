@@ -2,6 +2,7 @@
   ;;(:refer-clojure :exclude [reset!]);; We want our own reset!
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
+   [klang.core :refer [deflogger] :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]
@@ -11,13 +12,10 @@
    [cljsjs.highlight.langs.clojure]
    ;;[cljsjs.highlight.langs.json]
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
-                            tap close! pub sub timeout]]
+                            tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
    ))
-
-;; General:
-;; Actions with namespaces keywords are kind of private.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
@@ -68,8 +66,6 @@
    :actions-pub-ch nil
    :actions-sub-ch nil
    ;;;;;;;;;;;;;; View stuff
-   ;; If we can put some stuff on the console
-   :quiet false
    ;; If we're displaying the overlay or not
    :showing false
    ;; THe amount of logs we will buffer while frozen before discarding
@@ -145,8 +141,7 @@
   [s]
   ;; Don't accept db in this case. If we shall be quiet we're in single mode
   ;; anyways very likely
-  (when-not (:quiet @*db*)
-    (.log js/console (str s)))
+  (js/console.log (str s))
   s)
 
 ;; Watch out for:
@@ -252,7 +247,7 @@
 (defn render-tab-item
   "Renders a tab item on the left menu. A filter (keyword) typically."
   [db tab]
-  {:pre [(keyword? tab)  #_(log-console "render-tab-item")]}
+  {:pre [(keyword? tab)]}
   [:li {:style {:color (condp = (:showing-tab @db)
                          tab "white"
                          "grey")
@@ -264,7 +259,7 @@
 
 (defn render-overlay
   [db]
-  (if (:showing @db)
+  (when (:showing @db)
     [:div {:style (:div-outer css)}
      ;;;;;;;;;; The left nav menu ;;;;;;;;;
      [:div.klang-nav
@@ -370,6 +365,17 @@
       ensure-msg-vec
       ensure-timed))
 
+(defn single-transduce
+  "Takes a transducer (xform) and an item and applies the transducer to the
+  singe element and returnes the transduced item. Note: No reducing is
+  involved. Returns nil if there was no result."
+  [xform x]
+  ;; First pass the reducers to the transducer. This is just a function that
+  ;; returns the second argument (the result).
+  ;; Then invoke it with nil as the accumulator and x the current actual
+  ;; element
+  ((xform (fn[_ r] r)) nil x))
+
 (defn ch->logs!
   "Taps into the mult chan of the db and pushed the log event into the logs
   atom when a log event is received."
@@ -392,7 +398,8 @@
           ;; Put the log event into the db
           (action! db :new-log
                    (log+rules
-                    db (first (into [] transd [v])))))
+                    ;; TODO: Use transduce here instead
+                    db (single-transduce transd v))))
         (recur (and (= ch freeze-ch) v))))))
 
 
@@ -487,7 +494,7 @@
                     (search-transducer db tab)
                     (get-in @db [:tabs tab :transducers]))
           ;; A hack: Run a transducer on a single element and pick out the elem
-          data-td (first (into [] td [data]))
+          data-td (single-transduce td data)
           kork [:tabs tab :logs]]
       ;; Don't swap if it's empty. Doh
       (when-not (empty? data-td) 
@@ -500,6 +507,7 @@
   {:pre [(keyword? tab)]}
   (let [td (apply comp
                   (search-transducer db tab)
+                  ;;(take 100) ;; Todo: Implement take etc with scroll position
                   (get-in @db [:tabs tab :transducers]))
         ;; Run the transducers on all global logs in :logs
         data-td (into [] td (:logs @db))
@@ -549,8 +557,7 @@
   (let [action-ch (chan 37)]
     (tap (:actions-sub-ch @db) action-ch)
     (go-loop []
-      (let [ev (<! action-ch)]
-        (handle-action db ev))
+      (handle-action db (<! action-ch))
       (recur))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -818,7 +825,7 @@
 (def gen-logs
   (delay
    (go-loop [i 0]
-     (<! (timeout 1000))
+     (<! (timeout 100))
      (log! ::INFO {:gen i})
      ;;(l i)
      (recur (+ i 1)))))
@@ -844,11 +851,28 @@
        :this :should :really ['wrap 'around "on your small browser window"]}))
 
 
+;; macros
+
+
+(macros/elide! (filter #(= % ::YEAHH_LOGGER)))
+
+(deflogger hmm ::YEAHH_LOGGER)
+
+(deflogger nope ::NOPEE_LOGGER)
+
+(hmm :YEAHH)
+(nope "NOPEE_LOG_ME")
+(nope :NOPEE_LOG_ME_TOO)
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RDD
 (comment
+
+  (l (macroexpand-1 '(deflogger hmm ::YEAHH)))
+
+  (l (macroexpand-1 '(deflogger hmm :NOPE)))
 
   ;; Example usage
   (def my-lg1 (k/logger ::INFO))

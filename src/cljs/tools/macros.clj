@@ -2,8 +2,9 @@
   (:require-macros
     [cljs.core.async.macros :refer [go alt!]]
     [tools.helpers :as h])
-  (:require 
-    [cljs.core.async :refer [>! <! chan put! close! timeout]]))
+  #_(:require 
+    #_[cljs.core.async.macros :refer [go alt!]]
+    #_[cljs.core.async :refer [>! <! chan put! close! timeout]]))
 
 ;; Some from:
 ;; https://github.com/grammati/enos/blob/master/src/enos/core.clj
@@ -40,7 +41,6 @@
 ;;             ;; Handle exceptions for all '<? calls'
 ;;             (catch Exception e
 ;;               (log/error "error getting data"))))
-
 
 (defmacro <? [expr]
   `(h/throw-err (<! ~expr)))
