@@ -14,6 +14,16 @@
   [xform x]
   ((xform (fn[_ r] r)) nil x))
 
+(defmacro dochan [[binding chan] & body]
+  `(let [chan# ~chan]
+     (cljs.core.async.macros/go
+       (loop []
+         (if-let [~binding (cljs.core.async/<! chan#)]
+           (do
+             ~@body
+             (recur))
+           :done)))))
+
 (defmacro elide!
   [filter_fn]
   (swap! xforms conj (eval filter_fn))
@@ -24,9 +34,9 @@
   ;;`(~'defmacro ~logger [& ~'_] )
   `(~'defn ~logger [& ~'_])
   #_(if (single-transduce (apply comp @xforms) level)
-    ;;`(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
-    `(~'defn ~logger [& ~'msg])
-    ;; Closure compiler will elide this useless function:
-    `(~'defn ~logger [& ~'msg])
-    ))
+      ;;`(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
+      `(~'defn ~logger [& ~'msg])
+      ;; Closure compiler will elide this useless function:
+      `(~'defn ~logger [& ~'msg])
+      ))
 

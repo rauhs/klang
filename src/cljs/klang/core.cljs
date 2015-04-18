@@ -2,7 +2,7 @@
   ;;(:refer-clojure :exclude [reset!]);; We want our own reset!
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
-   [klang.core :refer [deflogger] :as macros]
+   [klang.core :refer [deflogger dochan] :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]
@@ -32,7 +32,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Dev doc:
-;; TODO: Move freeze-ch to action channel
 ;; TODO: Make (logger) a macro which only generates code for certain levels?
 ;; Or should the user create that macro?
 ;; Clicking on a namespace should create a transducer with the same key and
@@ -295,7 +294,7 @@
             {:cursor "pointer"
              :color (if (:frozen @db) "orange" "green")}
             :on-click (fn[e] (action! db :toggle-freeze))}
-        "Freeze"]]
+        (if (:frozen @db) "Thaw" "Freeze")]]
       ]
      ;;;;;;;;;; The main logs ;;;;;;;;;
      [:div.klang-logs
@@ -384,7 +383,8 @@
   ;; be filling up.
   ;; Problem: Can't put the transducer into the chan argument since it's empty
   ;; when called in the beginning
-  (let [lg-ch (tap (:log-sub-ch @db) (chan (sliding-buffer 1000)))
+  ;; TODO: Rewrite with mix & toggle
+  (let [lg-ch (tap (:log-sub-ch @db) (chan (sliding-buffer (:freeze-buffer @db))))
         freeze-ch (:freeze-ch @db)]
     (go-loop [is-frozen false]
       ;; l-chans: What ch to listen
@@ -468,14 +468,24 @@
   [db ev]
   (swap! db assoc :showing false))
 
+(defn cloned-tab-name
+  "Returns the next unused name for a tab. Ex:
+  Existing: :error, :info, :my-ns, my-ns0
+  if tab-kw is :my-ns this function will return :my-ns1"
+  [db tab-kw]
+  (let [candidates (map #(->> % (str (name tab-kw))
+                              keyword)
+                        (range))
+        existing (set  (keys (:tabs @db)))]
+    (first (filter #(do (log-console %) (not (contains? existing %))) candidates))))
+
 (defmethod handle-action :clone-tab
   [db _]
-  ;;(let )
-  ;;(swap! db assoc-in [:tabs (:showing-tab @db)] tab)
-  )
+  (let [tab (:showing-tab @db)]
+    (swap! db assoc-in
+           [:tabs (cloned-tab-name db tab)]
+           (get-in @db [:tabs tab]))))
 
-;;(log-console (take-while  (iterate inc 1)))
-;;(log-console (take-while  (range)))
 
 (defmethod handle-action :switch-tab
   [db {tab :data}]
@@ -534,7 +544,7 @@
 (defmethod handle-action :toggle-freeze
   [db _]
   (action! db (if (:frozen @db)
-                :unfreeze
+                :thaw
                 :freeze)))
 
 (defmethod handle-action :freeze
@@ -543,22 +553,20 @@
   (put! (:freeze-ch @db) true)
   (swap! db assoc :frozen true))
 
-;; I dont like the word thaw
-(defmethod handle-action :unfreeze
+(defmethod handle-action :thaw
   [db _]
   ;; Make the log handler stop reading form the logs:
   (put! (:freeze-ch @db) false)
   (swap! db assoc :frozen false))
 
-;; TODO: Refactor me into a function call. Check out dochan in macros.clj
+;; TODO: Refactor me into a function call.
 (defn init-action-handler
   "Initializes the main action handlers by tapping into the action channel."
   [db]
   (let [action-ch (chan 37)]
     (tap (:actions-sub-ch @db) action-ch)
-    (go-loop []
-      (handle-action db (<! action-ch))
-      (recur))))
+    (dochan [ev action-ch] 
+            (handle-action db ev))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; API
@@ -571,11 +579,11 @@
   ([db]
    (action! db :freeze)))
 
-(defn unfreeze!
+(defn thaw!
   "Makes the logger resume streaming logs."
-  ([] (unfreeze! *db*))
+  ([] (thaw! *db*))
   ([db]
-   (action! db :unfreeze)))
+   (action! db :thaw)))
 
 (defn show!
   "Makes the overlay show."
@@ -588,7 +596,7 @@
   ([] (hide! *db*))
   ([db]
    (action! db :hide)
-   (unfreeze! db))) ;; We probably want to continue logging I think
+   (thaw! db))) ;; We probably want to continue logging I think
 
 (defn raw-log!
   "Adds a log event lg-ev to db. Log can contain :time. Async.
@@ -596,7 +604,8 @@
   (raw-log! {:type :INFO :ns \"my.xy\" :msg :woah})"
   ([lg-ev] (raw-log! *db* lg-ev))
   ([db lg-ev]
-   (go (>! (:log-pub-ch @db) lg-ev))))
+   ;; Will never block due to dropping buffer
+   (put! (:log-pub-ch @db) lg-ev)))
 
 (defn log!
   "Logs a message msg for namespace and level ns_level.
@@ -632,8 +641,10 @@
   (reset! *db* (new-db)))
 
 (defn init!
-  "Init function. Idempotent. Safe to call multiple times.
-  WARNING: It will re-init all channels so you'll have to re-listen to them."
+  "Init function. Idempotent. Safe to call multiple times. WARNING: It
+  will re-init all channels so you'll have to re-listen to them. If
+  you want to set freeze-buffer you need to set it before and pass in
+  the db."
   ([] (init! *db*))
   ([db]
    (some-> (:log-pub-ch @db) close!) ;; Close previous channel if there is one
@@ -682,13 +693,13 @@
 
 
 #_(defn figwheel-reload []
-  (demo!))
+    (demo!))
 
 
 ;; (show! *db*)
 ;; (hide! *db*)
 ;; (freeze! *db*)
-;; (unfreeze! *db*)
+;; (thaw! *db*)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Functionality thru standard API:
