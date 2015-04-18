@@ -780,7 +780,8 @@
 ;; Hmm, sounds like a coloring problem??
 
 (defn pred->color
-  ""
+  "Given a predicate pred? and which (:ns, :type) it wraps the part of
+  the log message in a span and applies the color."
   [db pred? which color]
   {:pre [(or (= :ns which) (= :type which))]}
   (register-transducer!
@@ -803,7 +804,10 @@
 (defn ns*->color
   "Gives all namespaces that are children of ns* a color."
   [db ns* color]
-  (pred->color db (fn [ns] (or (= ns* ns) (parent? ns* ns))) :ns color))
+  (pred->color db
+               (fn [ns] (or (= ns* ns)
+                            (parent? ns* ns)))
+               :ns color))
 
 (defn msg->console!
   "Registers a listener to the log channel which will --in addition to
@@ -832,16 +836,42 @@
                                          (set types)
                                          (:type %)))))
 
+(defn tab->ns*!
+  [db tab-key & namespaces]
+  (tab->transducer! db tab-key (filter #(some
+                                         (fn[ns] (self-or-parent? ns (:ns %)))
+                                         namespaces))))
+
+
+(defn tab->ns!
+  [db tab-key & namespaces]
+  (tab->transducer! db tab-key (filter #(some
+                                         (fn[ns] (= ns (:ns %)))
+                                         namespaces))))
+
+;; OLD:
+#_(defn tab->ns!
+  [db tab-key & namespaces]
+  (tab->transducer! db tab-key (filter #(contains?
+                                         (set namespaces)
+                                         (:ns %)))))
+
 
 (register-highlighter! *db*)
 (type->color *db* :INFO "lightblue")
 (type->color *db* :ERROR "red")
-(ns*->color *db* "my.ns" "darkred")
+(type->color *db* :TRACE "gray")
+(type->color *db* :WARN "orange")
+;;(ns*->color *db* "my.ns" "darkred")
 (msg->console! *db* :CONSOLE)
-(tab->type! *db* :error :ERROR :WARNING)
+(tab->type! *db* :error :ERROR)
+(tab->type! *db* :errwarn :ERROR :WARN)
+(tab->ns! *db* :my.ns "my.ns")
+(tab->ns*! *db* :my.ns* "my.ns")
 ;; Or if we want multiple:
 ;; (tab->transducer! *db* :my.ns (filter #(self-or-parent? "my.ns" (:ns %))))
 
+(log! *db* ::WARN :hi :there)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Log some:
@@ -868,7 +898,7 @@
      ;;(l i)
      (recur (+ i 1)))))
 
-;; Dered me to generate logs and test freezing
+;; Deref me to generate logs and test freezing
 ;; @gen-logs
 
 
@@ -879,6 +909,8 @@
 (let [lg (logger ::ERROR)]
   (lg {:test "foo"} :bar :haha)
   (lg {:test "twooo"}))
+
+;;(log! )
 
 (let [lg (logger ::ERROR)]
   (lg {:test "foo"} :bar :haha)
