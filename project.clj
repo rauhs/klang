@@ -68,6 +68,14 @@
                      :asset-path   "js/out"
                      :optimizations :none
                      :pretty-print  true}}
+    :prod_debug {:source-paths ["src/cljs"]
+           :compiler {:output-to     "resources/public/cljs/production_debug/app.js"
+                      :output-dir    "resources/public/cljs/production_debug/out"
+                      :asset-path   "js/out"
+                      :output-wrapper false
+                      :pseudo-names true
+                      :optimizations :advanced
+                      :pretty-print  true}}
     :prod {:source-paths ["src/cljs"]
            :compiler {:output-to     "resources/public/cljs/production/app.js"
                       :output-dir    "resources/public/cljs/production/out"

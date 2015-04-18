@@ -21,8 +21,11 @@
   nil)
 
 (defmacro deflogger [logger level]
-  (if (single-transduce (apply comp @xforms) level)
-    `(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
+  ;;`(~'defmacro ~logger [& ~'_] )
+  `(~'defn ~logger [& ~'_])
+  #_(if (single-transduce (apply comp @xforms) level)
+    ;;`(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
+    `(~'defn ~logger [& ~'msg])
     ;; Closure compiler will elide this useless function:
     `(~'defn ~logger [& ~'msg])
     ))

@@ -846,22 +846,25 @@
 ;; macros
 
 
-(macros/elide! (filter #(= % ::YEAHH)))
+(macros/elide! (filter #(= % ::YEAHH_LOGGER)))
 
-(deflogger hmm ::YEAHH)
+(deflogger hmm ::YEAHH_LOGGER)
 
-(l (macroexpand-1 '(deflogger hmm ::YEAHH)))
-
-(deflogger nope :NOPEE)
+(deflogger nope ::NOPEE_LOGGER)
 
 (hmm :YEAHH)
-(nope :NOPEE)
+(nope "NOPEE_LOG_ME")
+(nope :NOPEE_LOG_ME_TOO)
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RDD
 (comment
+
+  (l (macroexpand-1 '(deflogger hmm ::YEAHH)))
+
+  (l (macroexpand-1 '(deflogger hmm :NOPE)))
 
   ;; Example usage
   (def my-lg1 (k/logger ::INFO))
