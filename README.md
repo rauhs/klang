@@ -36,6 +36,9 @@ This projects the concurrent nature of the control flow into a single, easy to
 understand and linear trace of events.
 The javascript console is not powerful enough, hence this library.
 
+# Clojars
+TODO
+
 # Usage
 
 The following is the simplest usage:
@@ -105,7 +108,11 @@ In this case you'll need to use a few macros to introduce a level of indirection
 that allows you to elide whatever logs you don't want to make it into function
 calls.
 
-Personally, I wouldn't even want any Klang code to stay in a production app since the logging code isn't too small.
+Personally, I wouldn't even want any Klang code to stay in a production app
+since the logging code of klang isn't too small.
+Hence, in production I want to log a subset of messages (such as warn/error/info
+but *not* trace/debug) to be pushed into a global core.async channel where I can
+send them to my server (or wherever) in case an error occurs.
 
 This library *could* offer this functionality but I think that most
 developers will have a slight different opinion on what to do with
@@ -116,12 +123,24 @@ of code and everybody can adapt it to their needs:
 ```clj
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
 ;; be modified easily to use simple functions.
+;; This macro file (.clj) is included in both, your production and dev
+;; environment.
+;; You'll call them differently by using different :source-paths in your
+;; leiningen conf
 
-;; (defmacro )
+;; The global atom holds the filters/transducers that determine if the log! call
+;; should be elided, cod
+(defonce filters (atom []))
+
+(defmacro log!
+  [type & msg]
+  )
 
 ```
 
-
+Using this macro indirection would also allow you to include filename and line
+number (meta data of `&form` in a macro) for each log message. Feel free to do
+so and send a pull request for this section.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser

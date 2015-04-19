@@ -762,6 +762,8 @@
 ;; Actually sounds more like locality sensitve hashing algorithm!
 ;; Easiest LSH:
 ;; Just explode each '.' and project it into some numbers.
+;; Actually probably a weighted projection that gives more weights to the
+;; leftmost parts of the namespace.
 ;; What color space to use? So many questions...
 
 (defn pred->color
