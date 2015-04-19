@@ -44,17 +44,16 @@
   (when-let [nslv-td (single-transduce (apply comp @xforms) ns_level)]
       ;; If we 
       `(klang.core/log! ~nslv-td ~@msg)
-      )
-  )
+      ))
 
-(defmacro deflogger
+#_(defmacro deflogger
   "Dont use me! Currently does not full elide function calls to the
   defined logger"
   [logger level]
   ;;`(~'defmacro ~logger [& ~'_] )
   ;;`(~'defn ~logger [& ~'_])
   (if (single-transduce (apply comp @xforms) level)
-    `(~'defn ~logger [& ~'msg] (apply klang.core/log! ~level ~'msg))
+    `(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~@msg))
     ;;`(~'defn ~logger [& ~'msg])
     ;; Closure compiler will elide this useless function:
     `(~'defn ~logger [& ~'msg])

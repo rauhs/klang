@@ -948,11 +948,18 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
-(macros/add-filter! (filter #(= % ::YEAHH_LOGGER)))
+;; We're passing in clojure code here!!
+;; ::YEAHH_LOGGER expands early enough so that we do get klang.core here and not
+;; klang.macros namespace. Yipeey
+(macros/add-filter!
+ (clojure.core/filter
+  #(clojure.core/= % ::YEAHH_LOGGER)))
+
+
 
 (macros/log! ::YEAHH_LOGGER "test macro log")
-
-
+;; And also won't generate any JS code:
+(macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -963,6 +970,10 @@
   (def l log-console)
 
   (macros/add-filter! (filter #(= % ::YEAHH_LOGGER)))
+
+  (l (macroexpand-1 '(macros/log! ::YEAHH_LOGGER :hmm)))
+
+  (log-console (macroexpand-1 '(macros/log! ::YEAHH_LOGGER "test macro log")))
 
   (deflogger hmm ::YEAHH_LOGGER)
   (deflogger nope ::NOPEE_LOGGER)
