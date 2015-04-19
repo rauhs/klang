@@ -2,7 +2,7 @@
   ;;(:refer-clojure :exclude [reset!]);; We want our own reset!
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
-   [klang.core :refer [deflogger dochan] :as macros]
+   [klang.macros :refer [deflogger dochan] :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]
@@ -231,7 +231,13 @@
    [:span
     {:style {:cursor "pointer"}
      ;; Not sure how many browsers allow this shortcut (console.dir)
-     :on-click (fn[_] (mapv #(js/console.log "%O" %) (:msg lg-ev)))}
+     :on-click (fn[_]
+                 (do 
+                   (js/console.log "---- %s/%s -- %O"
+                                   (:ns lg-ev)
+                                   (name (:type lg-ev))
+                                   (:time lg-ev))
+                   (mapv #(js/console.log "%O" %) (:msg lg-ev))))}
     (if-let [rndr (get-in lg-ev [:render :msg])]
       [(apply comp rndr) (:msg lg-ev)]
       (str (:msg lg-ev)))]])
@@ -352,7 +358,7 @@
   "Returns true if the argument is a valid log event. Must include date/time."
   [log-ev]
   (and 
-   (instance? goog.date.Date (:time log-ev))
+   (instance? goog.date.DateTime (:time log-ev))
    ;; Only used by closure compiler:
    ;;(instance? goog.date.DateLike (:time log-ev))
    (string? (:ns log-ev)) ;; Namespace needs to be a string.
@@ -942,6 +948,9 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
+(macros/add-filter! (filter #(= % ::YEAHH_LOGGER)))
+
+(macros/log! ::YEAHH_LOGGER "test macro log")
 
 
 

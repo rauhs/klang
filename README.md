@@ -148,9 +148,18 @@ of code and everybody can adapt it to their needs:
 ;; leiningen conf
 
 ;; The global atom holds the filters/transducers that determine if the log! call
-;; should be elided, cod
-(defonce filters (atom []))
+;; should be elided or not:
+;; This lives only during the compilation phase and will not result in any
+;; javascript code
+;; Q: Why transducers and not just an array of predicate functions?
+;; A: We may be interested in changing (ie. (map..)) the passed in keyword. For
+;; instance by removing the namespace from the keyword.
+;; The function transduces on (namespaced) keywords which are the log namespace
+;; and type
+(defonce xforms (atom [(filter (constantly true))]))
 
+;; The main macro to call all thoughout your cljs code:
+;; type is your usual ::INFO, ::WARN etc.
 (defmacro log!
   [type & msg]
   )
@@ -158,8 +167,8 @@ of code and everybody can adapt it to their needs:
 ```
 
 Using this macro indirection would also allow you to include filename and line
-number (meta data of `&form` in a macro) for each log message. Feel free to do
-so and send a pull request for this section.
+number (meta data of `&form` in a macro) for each log message.
+Feel free to do so and send a pull request for this section.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser

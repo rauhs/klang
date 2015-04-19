@@ -1,4 +1,4 @@
-(ns klang.core)
+(ns klang.macros)
 
 (defmacro when-debug
   [& exprs]
@@ -34,11 +34,17 @@
   Example:
   (add-filter! (filter #(= % ::INFO)))"
   [filter_fn]
-  (swap! xforms conj (eval filter_fn)))
+  (swap! xforms conj (eval filter_fn))
+  ;; Don't emit any code:
+  nil)
 
 (defmacro log!
+  "Don't use this. Write your own."
   [ns_level & msg]
-  ;;(if )
+  (when-let [nslv-td (single-transduce (apply comp @xforms) ns_level)]
+      ;; If we 
+      `(klang.core/log! ~nslv-td ~@msg)
+      )
   )
 
 (defmacro deflogger
@@ -48,9 +54,9 @@
   ;;`(~'defmacro ~logger [& ~'_] )
   ;;`(~'defn ~logger [& ~'_])
   (if (single-transduce (apply comp @xforms) level)
-      `(~'defn ~logger [& ~'msg] (apply klang.core/log! ~level ~'msg))
-      ;;`(~'defn ~logger [& ~'msg])
-      ;; Closure compiler will elide this useless function:
-      `(~'defn ~logger [& ~'msg])
-      ))
+    `(~'defn ~logger [& ~'msg] (apply klang.core/log! ~level ~'msg))
+    ;;`(~'defn ~logger [& ~'msg])
+    ;; Closure compiler will elide this useless function:
+    `(~'defn ~logger [& ~'msg])
+    ))
 
