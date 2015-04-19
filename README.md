@@ -53,15 +53,32 @@ The following is the simplest usage:
 ;; Setups reasonable default colors for :INFO etc
 (k/default-config!)
 
+;; Setup some new tabs (left menu)
+;; Only hold events from one namespace
+(k/tab->ns! k/*db* :my-ns "my.ns" "some.other.ns")
+;; Only hold events from ns and it's children
+;; so here: my.ns.* and other.ns.*
+(k/tab->ns*! k/*db* :my-ns* "my.ns" "other.ns")
+;; Or only hold certain types:
+(k/tab->type! k/*db* :my-ns :INFO :WARN) ;; Yes same key as tab->ns! call
+
 (def lg
   (k/logger ::INFO))
 
 (lg :db-init "Db initiaized" 'another-arbitrary-param)
+(lg :validation :ok {:user userid})
 
 ;; Or without the indirection:
 (k/log! ::INFO "User logged in")
 
-(k/show!) ;; Show the logs.
+;; Or the low level raw log:
+(k/raw-log! {:type :INFO
+             :ns "whatever.ns.you.like"
+             :msg [:one :two "foo"]})
+
+;; Show the logs.
+(k/show!)
+;; Or just press `l` if you have applied the default-config!
 ```
 
 There is nothing special about `::INFO`, you can use any arbitrary keyword.

@@ -871,8 +871,9 @@
   (tab->type! *db* :erro :ERRO)
   (tab->type! *db* :errwarn :ERRO :WARN)
   (tab->ns! *db* :my.ns "my.ns")
+  (tab->type! *db* :my.ns :INFO)
   (tab->ns*! *db* :my.ns* "my.ns")
-  (msg->console! *db* :CONSOLE)
+  ;;(msg->console! *db* :CONSOLE)
 
   (doseq [x (range 15)
           :let [lg {:msg (str "Log msg " (* x 1))
@@ -888,7 +889,8 @@
     ;; Will receive a time for the channel listener
     (raw-log! *db* lg))
   ;; These will log to the console
-  (let [lg (logger ::CONSOLE)]
+  ;; OBSOLETE:
+  #_(let [lg (logger ::CONSOLE)]
     (lg {:test "foo"} :bar))
 
   (log! :TRAC "World peace not achieved.")
