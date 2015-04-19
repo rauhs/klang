@@ -1,10 +1,12 @@
 (ns klang.core)
 
-(defmacro when-debug [& exprs]
+(defmacro when-debug
+  [& exprs]
   `(when ~(with-meta 'js/goog.DEBUG assoc :tag 'boolean)
      ~@exprs))
 
-(defonce xforms (atom [(filter (constantly true))]))
+(defonce xforms
+  (atom [(filter (constantly true))]))
 
 (defn single-transduce
   "Takes a transducer (xform) and an item and applies the transducer to the
@@ -23,13 +25,24 @@
              (recur))
            :done)))))
 
-(defmacro elide!
+(defmacro add-filter!
+  "Adds the filter_fn function to the global filter functions. The
+  function will be called by the macros `deflogger' and `log!' with
+  the keyword for the log message. If the function returns false the
+  logger/log-msg will be elided during compile time. If true, the log
+  call will remain in place.
+  Example:
+  (add-filter! (filter #(= % ::INFO)))"
   [filter_fn]
-  (swap! xforms conj (eval filter_fn))
-  ;; Not sure if I need this nil
-  nil)
+  (swap! xforms conj (eval filter_fn)))
 
-(defmacro deflogger [logger level]
+(defmacro log!
+  [ns_level & msg])
+
+(defmacro deflogger
+  "Dont use me! Currently does not full elide function calls to the
+  defined logger"
+  [logger level]
   ;;`(~'defmacro ~logger [& ~'_] )
   ;;`(~'defn ~logger [& ~'_])
   (if (single-transduce (apply comp @xforms) level)

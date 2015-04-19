@@ -919,6 +919,7 @@
 
 
 
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; RDD
@@ -927,7 +928,7 @@
   ;; Alias
   (def l log-console)
 
-  (macros/elide! (filter #(= % ::YEAHH_LOGGER)))
+  (macros/add-filter! (filter #(= % ::YEAHH_LOGGER)))
 
   (deflogger hmm ::YEAHH_LOGGER)
   (deflogger nope ::NOPEE_LOGGER)
