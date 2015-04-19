@@ -14,16 +14,12 @@
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
    ;; Google Closure
-   [goog.dom :as dom]
-   )
+   [goog.dom :as dom])
   (:import 
-   [goog.ui KeyboardShortcutHandler])
-  )
+   [goog.ui KeyboardShortcutHandler]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
-;; High level overview:
-;; TODO
 
 ;; Limitation:
 ;; The transducers registerd for rendering (via register-transducers) will be
@@ -31,12 +27,10 @@
 ;; limited to map & filter.
 ;; This is could be changed if we setup all transducers first and then start the
 ;; mult channel hookup that can transduce the items
-;; TODO: docs: Talk about the layout of a message.
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Dev doc:
-;; TODO: Make (logger) a macro which only generates code for certain levels?
-;; Or should the user create that macro?
+;; TODO:
 ;; Clicking on a namespace should create a transducer with the same key and
 ;; filter only that ns
 
@@ -133,8 +127,7 @@
     :position "fixed"
     ;;:margin-top "2em" ;; For the tabs, or tabs to the right?
     :overflow-y "auto" ;; So we can scroll the logs 
-    }
-   })
+    }})
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Helpers
@@ -766,6 +759,10 @@
 ;; For instance all parents vs childs have stronger colors...
 ;; How to define a tree of colors such that they're similar yet different?
 ;; Sounds like a coloring problem??
+;; Actually sounds more like locality sensitve hashing algorithm!
+;; Easiest LSH:
+;; Just explode each '.' and project it into some numbers.
+;; What color space to use? So many questions...
 
 (defn pred->color
   "Given a predicate pred? and which (:ns, :type) it wraps the part of
@@ -842,10 +839,14 @@
                                          (fn[ns] (= ns (:ns %)))
                                          namespaces))))
 
+;; http://www.w3schools.com/cssref/css_colornames.asp
 (defn color-types! [db]
-  (type->color db :TRAC "gray")
-  (type->color db :INFO "lightblue")
+  (type->color db :TRAC "lightblue")
+  (type->color db :DEBG "gray")
+  (type->color db :INFO "steelblue")
   (type->color db :ERRO "red")
+  (type->color db :CRIT "darkred")
+  (type->color db :FATAL "firebrick")
   (type->color db :WARN "orange"))
 
 (defn default-config!
@@ -871,14 +872,14 @@
   (tab->ns*! *db* :my.ns* "my.ns")
   (msg->console! *db* :CONSOLE)
 
-  (doseq [x (range 30)
+  (doseq [x (range 15)
           :let [lg {:msg (str "Log msg " (* x 1))
                     :type :INFO
                     :ns "my.ns"}]]
     ;; Will receive a time for the channel listener
     (raw-log! *db* lg))
 
-  (doseq [x (range 30)
+  (doseq [x (range 15)
           :let [lg {:msg (str "Log msg " (* x 1))
                     :type :TRAC
                     :ns "my.ns.one"}]]
@@ -888,14 +889,18 @@
   (let [lg (logger ::CONSOLE)]
     (lg {:test "foo"} :bar))
 
+  (log! :TRAC "World peace not achieved.")
+  (log! :DEBG "No ns")
   (log! :INFO "No ns")
-  (log! *db* :WARN "With db and stuff")
+  (log! :FATAL "fatal stuff")
+  (log! :CRIT "World peace not achieved.")
+  (log! *db* :FATAL "With db and stuff")
+  (log! *db* :WARN "Warn and stuff")
 
   (let [lg (logger ::ERRO)]
     (lg {:test "foo"} :bar "this is a problem")
     (lg {:test "twooo"}))
 
-  (log! ::WARN :warning :you "--")
 
   (let [lg (logger ::ERRO)]
     (lg {:test "foo"} :bar)

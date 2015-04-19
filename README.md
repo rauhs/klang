@@ -84,31 +84,38 @@ Each log message *internally* has the following fields:
   and the like.
 * `:msg` the actual log message. Is always a vector, even if a single item. This
   allows for arbitrary parameters passed to the various logging functions.
+  The default renderer always calls `js->clj` on the message
+* `:uuid` is a UUID that the log message is identified with.
 
+The only required fields are `:msg` and `:type`, all others can be omitted.
+The `:time` defaults to the current time when the message is added.
 
 # Use cases
-The library can be used for different use cases.
+The library can be used for different use cases which are described in the following sections:
 
 ## Web browser app development
 This is likely the most common use case. You're developing a
-Clojurescript app for the browser. You want power
-
+Clojurescript app for the browser. You want powerful logging.
+Simply require the library and call the API functions to log.
 
 ### With deployment to clients
-In most use cases for web app development you'll want to remove
-logging data and the overhead of Klang from your JS code for
-deployment.
-In this case you'll need to use a few macros to 
+In most use cases for web app development you'll want to remove logging data and
+the overhead of Klang from your JS code for deployment.
+In this case you'll need to use a few macros to introduce a level of indirection
+that allows you to elide whatever logs you don't want to make it into function
+calls.
+
+Personally, I wouldn't even want any Klang code to stay in a production app since the logging code isn't too small.
 
 This library *could* offer this functionality but I think that most
 developers will have a slight different opinion on what to do with
-their logs.
+their logs so it's best to just write them yourself.
 This is why I've chosen to give this recipe that only has a few lines
 of code and everybody can adapt it to their needs:
 
 ```clj
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
-;; be modified easily to use simple functions and apply (some) to them
+;; be modified easily to use simple functions.
 
 ;; (defmacro )
 
@@ -149,6 +156,8 @@ supervisord):
 
 # TODO
 
+* Improve performance by only rendering the subset of log messages that are seen
+  for the current scrolling position.
 * Go through the `TODO:` items in `klang/core.cljs`
 
 ## License
