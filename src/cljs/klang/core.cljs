@@ -213,7 +213,7 @@
 (defn render-msg
   "Renders a single log message."
   [lg-ev]
-  (log-console "render-msg")
+  ;;(log-console "render-msg")
   ^{:key (:uuid lg-ev)} ;; Performance?
   [:li {:style {:list-style-type "none"}}
    ;; TODO: Could also accept :render :msg which renders the entire lg-ev?
@@ -231,14 +231,20 @@
      [(apply comp rndr) (:type lg-ev)]
      (name (:type lg-ev)))
    " "
-   (if-let [rndr (get-in lg-ev [:render :msg])]
-     [(apply comp rndr) (:msg lg-ev)]
-     (str (:msg lg-ev)))])
+   ;; Wrap the message in a span to allow clicking it and logging it to the
+   ;; console
+   [:span
+    {:style {:cursor "pointer"}
+     ;; Not sure how many browsers allow this shortcut (console.dir)
+     :on-click (fn[_] (mapv #(js/console.log "%O" %) (:msg lg-ev)))}
+    (if-let [rndr (get-in lg-ev [:render :msg])]
+      [(apply comp rndr) (:msg lg-ev)]
+      (str (:msg lg-ev)))]])
 
 (defn render-logs
   [logs]
-  ;;{:pre [(sequential? logs)]}
-  {:pre [(log-console "expensive render called") (sequential? logs)]}
+  {:pre [#_(log-console "expensive render called")
+         (sequential? logs)]}
   [:ul {:style {:padding ".5em"
                 :margin "0em"
                 :line-height "1.06em"}}
@@ -468,7 +474,7 @@
 ;; We're fine missing out on actions:
 (defmethod handle-action nil
   [_ e]
-  (log-console (str "Unhandled event" e)))
+  (log-console (str "Klang: Unhandled event. Weird." e)))
 
 ;; Scrolling is a private event, hence namespaced keyword
 (defmethod handle-action ::scroll
@@ -490,7 +496,7 @@
 
 (defn cloned-tab-name
   "Returns the next unused name for a tab. Ex:
-  Existing: :error, :info, :my-ns, my-ns0
+  Existing: :erro, :info, :my-ns, my-ns0
   if tab-kw is :my-ns this function will return :my-ns1"
   [db tab-kw]
   (let [candidates (map #(->> % (str (name tab-kw))
@@ -540,7 +546,7 @@
                   (get-in @db [:tabs tab :transducers]))
         ;; Run the transducers on all global logs in :logs
         data-td (into [] td (:logs @db))
-        ;;_ (log-console (map :type (:logs @db)))
+        ;;(log-console (map :type (:logs @db)))
         kork [:tabs tab :logs]]
     (swap! db update-in kork (fn[_] data-td))))
 
@@ -795,6 +801,7 @@
                             (parent? ns* ns)))
                :ns color))
 
+;; This is mostly obsolete now that we can click on a message and log it.
 (defn msg->console!
   "Registers a listener to the log channel which will --in addition to
   logging it-- also output the :msg to the console with %O.
@@ -836,9 +843,9 @@
                                          namespaces))))
 
 (defn color-types! [db]
+  (type->color db :TRAC "gray")
   (type->color db :INFO "lightblue")
-  (type->color db :ERROR "red")
-  (type->color db :TRACE "gray")
+  (type->color db :ERRO "red")
   (type->color db :WARN "orange"))
 
 (defn default-config!
@@ -858,8 +865,8 @@
 ;; For development
 (defn ex-log-data []
   (ns*->color *db* "klang.core" "yellow")
-  (tab->type! *db* :error :ERROR)
-  (tab->type! *db* :errwarn :ERROR :WARN)
+  (tab->type! *db* :erro :ERRO)
+  (tab->type! *db* :errwarn :ERRO :WARN)
   (tab->ns! *db* :my.ns "my.ns")
   (tab->ns*! *db* :my.ns* "my.ns")
   (msg->console! *db* :CONSOLE)
@@ -873,24 +880,24 @@
 
   (doseq [x (range 30)
           :let [lg {:msg (str "Log msg " (* x 1))
-                    :type :TRACE
+                    :type :TRAC
                     :ns "my.ns.one"}]]
     ;; Will receive a time for the channel listener
     (raw-log! *db* lg))
   ;; These will log to the console
   (let [lg (logger ::CONSOLE)]
-    (lg {:test "foo"} :bar :haha))
+    (lg {:test "foo"} :bar))
 
-  (let [lg (logger ::ERROR)]
-    (lg {:test "foo"} :bar :haha)
+  (let [lg (logger ::ERRO)]
+    (lg {:test "foo"} :bar "this is a problem")
     (lg {:test "twooo"}))
 
   (log! ::WARN :warning :you "--")
 
-  (let [lg (logger ::ERROR)]
-    (lg {:test "foo"} :bar :haha)
+  (let [lg (logger ::ERRO)]
+    (lg {:test "foo"} :bar)
     (lg nil)
-    (lg :function  (fn[_] (map :foo)))
+    (lg :function  (fn[name] (str "Hello " name)))
     ;; Long message should wrap
     (lg :test "This is a longer test message so we can see wrapping it around."
         :nil=also-works nil

@@ -8,12 +8,19 @@ filtering and syntax highlighting for clojure data structures:
 
 # Features
 
-* Define multiple tabs that filter only the messages that you're
-  interested in.
-* Enter a search term in each tab that filter
+* Central hub to push all log messages in your client app
+* Define multiple tabs that filter only the messages that you're interested in.
+* Filter exactly what you want in a tab with transducers (for instance: "wait
+  for event X, then display the next 10 events")
+* Enter a search term to find log messages
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
-* Cloning existing tabs to quickly apply different search terms.
+* Clone existing tabs to quickly apply different search terms.
+* Log is asynchronous so you don't have to worry about blocking.
+* Click on any log message and dump the object to your javascript console (as an
+  object). This allows you (at least in Chrome) to inspect the object. This even
+  allows you to log functions and invoke them (after assigning them to a global
+  variable with a right click) in your javascript console.
 
 # Usage
 
@@ -51,6 +58,19 @@ Note that if you use this in production facing code then you'll want
 to use this library somewhat differently in order to elide any logging
 for production (see below).
 
+# Log message layout
+Each log message *internally* has the following fields:
+
+* `:time` is a `goog.date.Date` instance. Either user supplied or filled when
+  logged
+* `:ns` is a `string` holding the namespace where the log came from. User
+  supplied or the empty string "".
+* `:type` is a `keyword` specifying the "type" of a log message. This can really
+  be anything you want. But most people will use `:INFO`, `:ERROR` or `:WARN`
+  and the like.
+* `:msg` the actual log message. Is always a vector, even if a single item. This
+  allows for arbitrary parameters passed to the various logging functions.
+
 
 # Use cases
 The library can be used for different use cases.
@@ -66,7 +86,7 @@ logging data and the overhead of Klang from your JS code for
 deployment.
 In this case you'll need to use a few macros to 
 
-This library /could/ offer this functionality but I think that most
+This library *could* offer this functionality but I think that most
 developers will have a slight different opinion on what to do with
 their logs.
 This is why I've chosen to give this recipe that only has a few lines
@@ -100,6 +120,18 @@ realtime.
 ## Tabs
 
 ## Message rendering
+
+# Suggested log types
+I'll suggest those log types in order to have same string lengths (similar to
+supervisord):
+
+* `:TRAC` -- trace
+* `:DEBG` -- debug
+* `:INFO`
+* `:WARN`
+* `:ERRO`
+* `:CRIT` -- critical
+* `:FATAL`
 
 ## License
 
