@@ -4,7 +4,7 @@ This library offers a simple logging interface in clojurescript for
 usage in the browser. It allows for powerful (user defined) log
 filtering and syntax highlighting for clojure data structures:
 
-![image]()
+![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
 
 # Features
 
@@ -33,12 +33,17 @@ Clojurescript app for the browser. You want power
 In most use cases for web app development you'll want to remove
 logging data and the overhead of Klang from your JS code for
 deployment.
-In this case you'll need 
+In this case you'll need to use a few macros to 
 
+This library /could/ offer this functionality but I think that most
+developers will have a slight different opinion on what to do with
+their logs.
+This is why I've chosen to give this recipe that only has a few lines
+of code and everybody can adapt it to their needs:
 
-### With partial logging on client
-This use case will elide 
+```clj
 
+```
 
 
 ## Server mode

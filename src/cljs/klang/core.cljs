@@ -912,7 +912,7 @@
   (ex-log-data))
 
 
-;; (demo!)
+(demo!)
 ;; Deref to generate logs
 ;; @gen-logs
 

@@ -37,7 +37,9 @@
   (swap! xforms conj (eval filter_fn)))
 
 (defmacro log!
-  [ns_level & msg])
+  [ns_level & msg]
+  ;;(if )
+  )
 
 (defmacro deflogger
   "Dont use me! Currently does not full elide function calls to the
