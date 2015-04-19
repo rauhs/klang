@@ -226,7 +226,7 @@
    (if-let [rndr (get-in lg-ev [:render :ns])]
      [(apply comp rndr) (:ns lg-ev)]
      (:ns lg-ev))
-   "/"
+   (when-not (empty? (:ns lg-ev)) "/")
    (if-let [rndr (get-in lg-ev [:render :type])]
      [(apply comp rndr) (:type lg-ev)]
      (name (:type lg-ev)))
@@ -425,7 +425,8 @@
                              (:hour-minute-second-ms tf/formatters)
                              (:time lg-ev))
                             " "
-                            (:ns lg-ev) "/"
+                            (:ns lg-ev)
+                            (when-not (empty? (:ns lg-ev)) "/")
                             (name (:type lg-ev)) " "
                             (str (:msg lg-ev)))
                    test  (.test re log-str)]
@@ -642,7 +643,8 @@
   ;; have an accurate time
   (raw-log! db {:time (t/time-now)
                 :type (keyword (name ns_level)) ;; name make ::FOO -> "FOO"
-                :ns (namespace ns_level) ;;  Ends up a string.
+                ;; (namespace :FOO) is nil, that's why we need (str) here
+                :ns (str (namespace ns_level))
                 :msg (vec msg)}))
 
 (defn logger
@@ -916,7 +918,7 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
-
+(log! :INFO "No ns")
 
 
 

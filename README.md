@@ -17,9 +17,32 @@ filtering and syntax highlighting for clojure data structures:
 
 # Usage
 
+The following is the simples usage:
+```clj
+(ns your.ns
+  (:require [klang.core :as k]))
 
+(k/init-single-mode!)
+(k/init!)
+;; The 
+(k/default-config!)
 
+(def lg
+  (k/logger ::INFO))
 
+(lg :db-init "Db initiaized" 'another-arbitrary-param)
+
+;; Or without the indirection:
+(k/log! ::INFO "User logged in")
+
+(k/show!) ;; Show the logs.
+```
+
+There is nothing special about `::INFO`, you can use any arbitrary keyword.
+
+Note that if you use this in production facing code then you'll want
+to use this library somewhat differently in order to elide any logging
+for production (see below).
 
 # Use cases
 The library can be used for different use cases.
