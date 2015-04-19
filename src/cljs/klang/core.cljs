@@ -888,6 +888,9 @@
   (let [lg (logger ::CONSOLE)]
     (lg {:test "foo"} :bar))
 
+  (log! :INFO "No ns")
+  (log! *db* :WARN "With db and stuff")
+
   (let [lg (logger ::ERRO)]
     (lg {:test "foo"} :bar "this is a problem")
     (lg {:test "twooo"}))
@@ -925,7 +928,6 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
-(log! :INFO "No ns")
 
 
 

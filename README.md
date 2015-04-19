@@ -10,8 +10,8 @@ filtering and syntax highlighting for clojure data structures:
 
 * Central hub to push all log messages in your client app
 * Define multiple tabs that filter only the messages that you're interested in.
-* Filter exactly what you want in a tab with transducers (for instance: "wait
-  for event X, then display the next 10 events")
+* Filter exactly what you want in a tab with transducers (allows things like:
+  "wait for event X, then show the next 10 events")
 * Enter a search term to find log messages
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
@@ -21,6 +21,20 @@ filtering and syntax highlighting for clojure data structures:
   object). This allows you (at least in Chrome) to inspect the object. This even
   allows you to log functions and invoke them (after assigning them to a global
   variable with a right click) in your javascript console.
+
+# Motivation
+By now (2015) the javascript and clojurescript community seems to have arrived
+at the fact that javascript applications need to be asynchronous throughout.
+React's Flux architecture, core.async, re-frame (which uses core.async), RxJS,
+CSP etc etc. are all examples of such design decisions.
+
+Asyncronous systems have many advantages but also make reasoning about the
+system harder.
+One very simple and effective way to cope (or rather: "help") with understanding
+behavior is extensive logging from the start of the development.
+This projects the concurrent nature of the control flow into a single, easy to
+understand and linear trace of events.
+The javascript console is not powerful enough, hence this library.
 
 # Usage
 
@@ -132,6 +146,10 @@ supervisord):
 * `:ERRO`
 * `:CRIT` -- critical
 * `:FATAL`
+
+# TODO
+
+* Go through the `TODO:` items in `klang/core.cljs`
 
 ## License
 
