@@ -55,12 +55,12 @@ The following is the simplest usage:
 
 ;; Setup some new tabs (left menu)
 ;; Only hold events from one namespace
-(k/tab->ns! k/*db* :my-ns "my.ns" "some.other.ns")
+(k/tab->ns! k/*db* :my-tab-name "my.ns" "some.other.ns")
 ;; Only hold events from ns and it's children
 ;; so here: my.ns.* and other.ns.*
 (k/tab->ns*! k/*db* :my-ns* "my.ns" "other.ns")
-;; Or only hold certain types:
-(k/tab->type! k/*db* :my-ns :INFO :WARN) ;; Yes same key as tab->ns! call
+;; Or only hold certain types. Yes same tab name as tab->ns! call:
+(k/tab->type! k/*db* :my-tab-name :INFO :WARN)
 
 (def lg
   (k/logger ::INFO))
@@ -72,13 +72,15 @@ The following is the simplest usage:
 (k/log! ::INFO "User logged in")
 
 ;; Or the low level raw log:
-(k/raw-log! {:type :INFO
+;; Can be useful if we get log message externally from a server.
+(k/raw-log! {:time (goog.date.DateTime.)
+             :type :INFO
              :ns "whatever.ns.you.like"
              :msg [:one :two "foo"]})
 
 ;; Show the logs.
 (k/show!)
-;; Or just press `l` if you have applied the default-config!
+;; Or just press `l` if you applied (default-config!)
 ```
 
 There is nothing special about `::INFO`, you can use any arbitrary keyword.
@@ -172,11 +174,43 @@ This mean that you'll have a central location (the browser app running
 klang) where you display your client and server-side logging data in
 realtime.
 
+### Timbre
+For instance writing a custom appender in timbre (TODO) could push the log
+messages to a browser window and then displaying them with Klang. The times of
+your log message wouldn't be touched since you can supply a date/time with
+`raw-log!`.
+
 # Customizing
 
 ## Tabs
+The example code above already defined some code that showed off defining custom
+tabs.
+You're not limited to filter by `:type` and `:ns` however, you can register
+arbitrary transducers for a tab.
+This allows you to filter and even modify the log messages.
+See the function `tab->transducer`.
+You can find an example of how to use that function in the source code of this
+library.
+In fact, `tab->type` and `tab->ns` are implemented using `tab->transducer`.
 
 ## Message rendering
+By default 
+
+You can find an example of how to use that function in the source code of this
+library.
+
+## Listening for logs
+Every log is pushed on a `mult` channel (see core.async docs) which you can tab
+into. The channel is in `:log-pub-ch` of the `db` atom.
+This allows you to also forward the logs to other places (localStorage or a
+server).
+
+## Reacting to klang actions
+Most actions are pushed on an the action channel `actions-pub-ch` in the `db`
+atom. Which again, is a `mult`.
+You can `tap` into it and react however you like.
+Events include showing/hiding the log overlay, new log, freezing the channel etc
+etc.
 
 # Suggested log types
 I'll suggest those log types in order to have same string lengths (similar to

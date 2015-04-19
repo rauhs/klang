@@ -33,6 +33,8 @@
 ;; TODO:
 ;; Clicking on a namespace should create a transducer with the same key and
 ;; filter only that ns
+;; TODO:
+;; Remove cljs-time dependency. I don't really use the functionality
 
 ;; If anything goes wrong in register-transducer and the render functions
 ;; figwheel goes a little crazy and we need to reload the page!
@@ -351,6 +353,8 @@
   [log-ev]
   (and 
    (instance? goog.date.Date (:time log-ev))
+   ;; Only used by closure compiler:
+   ;;(instance? goog.date.DateLike (:time log-ev))
    (string? (:ns log-ev)) ;; Namespace needs to be a string.
    (keyword? (:type log-ev))
    (contains? log-ev :msg) ;; can be anything (even nil!), but must exist
@@ -876,7 +880,8 @@
   ;;(msg->console! *db* :CONSOLE)
 
   (doseq [x (range 15)
-          :let [lg {:msg (str "Log msg " (* x 1))
+          :let [lg {:time (goog.date.DateTime.)
+                    :msg (str "Log msg " (* x 1))
                     :type :INFO
                     :ns "my.ns"}]]
     ;; Will receive a time for the channel listener
