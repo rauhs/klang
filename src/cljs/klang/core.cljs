@@ -635,7 +635,7 @@
    (put! (:log-pub-ch @db) lg-ev)))
 
 (defmulti log!
-  "Logs a message msg for namespace and level ns_level.
+  "Logs a message msg for namespace and level ns_type.
   Eg:
   (log ::WARN :server-down)
   (log db ::WARN :server-down)
@@ -643,17 +643,17 @@
   (fn [db_or_nslevel & _] (keyword? db_or_nslevel)))
 
 (defmethod log! true
-  [ns_level & msg]
-  (apply log! *db* ns_level msg))
+  [ns_type & msg]
+  (apply log! *db* ns_type msg))
 
 (defmethod log! false
-  [db ns_level & msg]
+  [db ns_type & msg]
   ;; Even though we could let the time be added later we do it right here to
   ;; have an accurate time
   (raw-log! db {:time (t/time-now)
-                :type (keyword (name ns_level)) ;; name make ::FOO -> "FOO"
+                :type (keyword (name ns_type)) ;; name make ::FOO -> "FOO"
                 ;; (namespace :FOO) is nil, that's why we need (str) here
-                :ns (str (namespace ns_level))
+                :ns (str (namespace ns_type))
                 :msg (vec msg)}))
 
 (defn logger
@@ -948,18 +948,14 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
-;; We're passing in clojure code here!!
-;; ::YEAHH_LOGGER expands early enough so that we do get klang.core here and not
-;; klang.macros namespace. Yipeey
-(macros/add-filter!
- (clojure.core/filter
-  #(clojure.core/= % ::YEAHH_LOGGER)))
+(macros/init-dev!)
+;;(macros/init-prod!)
+;;(macros/init-strip-ns!)
+;;(macros/init-debug-prod!)
 
-
-
-(macros/log! ::YEAHH_LOGGER "test macro log")
 ;; And also won't generate any JS code:
 (macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
+(macros/log! ::INFO :also :test :multi "args just in case" nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -968,31 +964,6 @@
 
   ;; Alias
   (def l log-console)
-
-  (macros/add-filter! (filter #(= % ::YEAHH_LOGGER)))
-
-  (l (macroexpand-1 '(macros/log! ::YEAHH_LOGGER :hmm)))
-
-  (log-console (macroexpand-1 '(macros/log! ::YEAHH_LOGGER "test macro log")))
-
-  (deflogger hmm ::YEAHH_LOGGER)
-  (deflogger nope ::NOPEE_LOGGER)
-
-  (hmm :YEAHH)
-
-  (nope "NOPE dont log me")
-  (nope "DONT LOG ME")
-
-  (l (macroexpand-1 '(deflogger hmm ::YEAHH)))
-
-  (l (macroexpand-1 '(deflogger hmm :NOPE)))
-
-  ;; Example usage
-  (def my-lg1 (k/logger ::INFO))
-  (def my-lg2 (k/logger :my.other.ns/INFO))
-  (def my-lg3 (k/logger :my.other.ns/DEBUG))
-  (k/log ::INFO {:my :event})
-  
 
   ;; :hour-minute-second-ms : 11:02:23.009
   ;; :time  : 11:01:56.611-04:00

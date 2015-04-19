@@ -140,12 +140,13 @@ This is why I've chosen to give this recipe that only has a few lines
 of code and everybody can adapt it to their needs:
 
 ```clj
+;; file-name: your.project/logging.clj
+;; 
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
 ;; be modified easily to use simple functions.
-;; This macro file (.clj) is included in both, your production and dev
-;; environment.
+;; This macro file (.clj) is used in both, your production and dev environment.
 ;; You'll call them differently by using different :source-paths in your
-;; leiningen conf
+;; leiningen configuration.
 
 ;; The global atom holds the filters/transducers that determine if the log! call
 ;; should be elided or not:
@@ -158,17 +159,75 @@ of code and everybody can adapt it to their needs:
 ;; and type
 (defonce xforms (atom [(filter (constantly true))]))
 
-;; The main macro to call all thoughout your cljs code:
-;; type is your usual ::INFO, ::WARN etc.
-(defmacro log!
-  [type & msg]
-  )
+;; The function that is called for logging.
+(def logger 'klang.core/log!)
 
+(defn logger! [log-sym]
+  (alter-var-root (var logger) (fn[_] log-sym)))
+
+;; If we should add line information to each log! call
+(def add-line-nr false)
+
+(defn line-nr! [tf]
+  (alter-var-root (var add-line-nr) (fn[_] tf)))
+
+(defn single-transduce
+  "Takes a transducer (xform) and an item and applies the transducer to the
+  singe element and returnes the transduced item. Note: No reducing is
+  involved. Returns nil if there was no result."
+  [xform x]
+  ((xform (fn[_ r] r)) nil x))
+
+(defmacro strip-ns!
+  "Adds a transducer so that namespace information is stripped from the log!
+  call"
+  []
+  (swap! xforms conj
+         (map (fn[type] (keyword (name type)))))
+  nil)
+
+(defmacro init-dev! []
+  (line-nr! true)
+  nil)
+
+(defmacro init-debug-prod!
+  "Sets up logging for production "
+  []
+  (logger! 'my.app.log/log->server!)
+  (line-nr! false)
+  (strip-ns!)
+  (swap! xforms conj
+         ;; Only allow error message
+         (comp 
+          (filter (fn[type] (= (name type) "ERRO")))
+          ))
+  nil)
+
+(defmacro init-prod!
+  "Productin. Strip all logging calls."
+  []
+  (logger! nil) ;; Not needed but just in case
+  (swap! xforms conj
+         (filter (constantly false)))
+  nil)
+
+;; The main macro to call all thoughout your cljs code:
+;; ns_type is your usual ::INFO, ::WARN etc.
+(defmacro log!
+  "Don't use this. Write your own."
+  [ns_type & msg]
+  ;; when-let returns nil which emits no code so we're good
+  (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
+    (if add-line-nr
+      `(~logger ~nslv-td ~(str "#" (:line (meta &form))) ~@msg)
+      `(~logger ~nslv-td ~@msg))))
+
+;; Note that while writing macros you may need some figwheel restarts in case of
+;; crashes.
 ```
 
-Using this macro indirection would also allow you to include filename and line
-number (meta data of `&form` in a macro) for each log message.
-Feel free to do so and send a pull request for this section.
+You can also add file name in the meta information of `&form` but I see no need
+for it dues to namespaced keywords.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser
