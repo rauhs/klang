@@ -178,7 +178,8 @@ of code and everybody can adapt it to their needs:
   [xform x]
   ((xform (fn[_ r] r)) nil x))
 
-(defmacro strip-ns!
+;; You may also make this a macro if you want to call it from cljs
+(defn strip-ns!
   "Adds a transducer so that namespace information is stripped from the log!
   call"
   []
@@ -226,13 +227,31 @@ of code and everybody can adapt it to their needs:
 ;; crashes.
 ```
 
+This is a long template. But I think it's better to not include this in the
+library since it's more flexible if users set it up themself.
+
 You can also add file name in the meta information of `&form` but I see no need
 for it dues to namespaced keywords.
 
+Then setup and call your logging like so:
+
+```clj
+(ns my.app.setup
+  (:require-macros
+   [klang.macros :refer [log!] :as lgmacros]))
+
+(macros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
+
+(log! ::INFO "hello" :there)
+```
+
+You can then switch over to production and get rid of all log calls or forward
+them to your own function.
+
 ## Server mode
-In this use case you're only interested in viewing logs in a browser
-window but the browser window itself does not host a client app that
-is interested in logging.
+In this use case you're only interested in viewing logs in a browser window but
+the browser window itself does not host a client app that is interested in
+logging.
 
 For instance, you're forwarding all your logs from your clojure
 backend app to Klang. You may also have multiple backends or even your
@@ -242,11 +261,16 @@ This mean that you'll have a central location (the browser app running
 klang) where you display your client and server-side logging data in
 realtime.
 
+* TODO: Add recipe to receive logs over websocket and push them in with `raw-log!`
+
 ### Timbre
 For instance writing a custom appender in timbre (TODO) could push the log
 messages to a browser window and then displaying them with Klang. The times of
 your log message wouldn't be touched since you can supply a date/time with
 `raw-log!`.
+
+* TODO: Code a timbre forwarder that also sends the log messages to a websocket
+  for displaying with klang.
 
 # Customizing
 

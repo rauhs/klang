@@ -948,13 +948,12 @@
 ;; Deref to generate logs
 ;; @gen-logs
 
-(macros/init-dev!)
+;;(macros/init-dev!)
 ;;(macros/init-prod!)
-;;(macros/init-strip-ns!)
 ;;(macros/init-debug-prod!)
 
 ;; And also won't generate any JS code:
-(macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
+;; (macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
 (macros/log! ::INFO :also :test :multi "args just in case" nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

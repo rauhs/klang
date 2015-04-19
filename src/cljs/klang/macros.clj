@@ -1,5 +1,4 @@
 (ns klang.macros)
-
 ;; I tried to create a user usable code generator here but the entire clj<->cljs
 ;; makes this very tough. Calling the macros with things other than data is
 ;; weird due to namespacing.
@@ -12,7 +11,6 @@
 ;; Remember to always return nil in macros that shouldn't generate any code.
 
 
-;; 
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
 ;; be modified easily to use simple functions.
 ;; This macro file (.clj) is used in both, your production and dev environment.
@@ -49,13 +47,13 @@
   [xform x]
   ((xform (fn[_ r] r)) nil x))
 
-(defmacro strip-ns!
+;; You may also make this a macro if you want to call it from cljs
+(defn strip-ns!
   "Adds a transducer so that namespace information is stripped from the log!
   call"
   []
   (swap! xforms conj
-         (map (fn[type] (keyword (name type)))))
-  nil)
+         (map (fn[type] (keyword (name type))))))
 
 (defmacro init-dev! []
   (line-nr! true)
@@ -109,6 +107,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; OLD:
+;; Not so well working.
 
 (defmacro when-debug
   [& exprs]
