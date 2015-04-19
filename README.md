@@ -17,14 +17,16 @@ filtering and syntax highlighting for clojure data structures:
 
 # Usage
 
-The following is the simples usage:
+The following is the simplest usage:
 ```clj
 (ns your.ns
   (:require [klang.core :as k]))
 
+;; We could potentially use multiple independent loggers. Single mode
+;; puts everthing in a local *db*
 (k/init-single-mode!)
 (k/init!)
-;; The 
+;; Setups reasonable default colors for :INFO etc
 (k/default-config!)
 
 (def lg
@@ -39,10 +41,16 @@ The following is the simples usage:
 ```
 
 There is nothing special about `::INFO`, you can use any arbitrary keyword.
+The `default-config!` sets up some default color rendering and also
+registers the keyboard shortcut `l` to view/hide the logs.
+
+There is also many ways you can customize the rendering yourself. See
+the section below for more details on this.
 
 Note that if you use this in production facing code then you'll want
 to use this library somewhat differently in order to elide any logging
 for production (see below).
+
 
 # Use cases
 The library can be used for different use cases.
@@ -65,8 +73,13 @@ This is why I've chosen to give this recipe that only has a few lines
 of code and everybody can adapt it to their needs:
 
 ```clj
+;; This requires Clojure 1.7 due to the use of transducers. But it can
+;; be modified easily to use simple functions and apply (some) to them
+
+;; (defmacro )
 
 ```
+
 
 
 ## Server mode
@@ -81,6 +94,12 @@ browser app to also forward the logging to one klang instance.
 This mean that you'll have a central location (the browser app running
 klang) where you display your client and server-side logging data in
 realtime.
+
+# Customizing
+
+## Tabs
+
+## Message rendering
 
 ## License
 
