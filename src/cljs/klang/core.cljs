@@ -944,7 +944,7 @@
   (ex-log-data))
 
 
-(demo!)
+;;(demo!)
 ;; Deref to generate logs
 ;; @gen-logs
 
@@ -954,7 +954,7 @@
 
 ;; And also won't generate any JS code:
 ;; (macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
-(macros/log! ::INFO :also :test :multi "args just in case" nil)
+;; (macros/log! ::INFO :also :test :multi "args just in case" nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
