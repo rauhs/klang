@@ -37,7 +37,9 @@ understand and linear trace of events.
 The javascript console is not powerful enough, hence this library.
 
 # Clojars
-TODO
+
+Warning: I've never deployed to clojars.
+[![Clojars Project](http://clojars.org/klang/latest-version.svg)](http://clojars.org/klang)
 
 # Usage
 
