@@ -219,8 +219,7 @@ of code and everybody can adapt it to their needs:
   (swap! xforms conj
          ;; Only emit error messages log calls:
          (comp 
-          (filter (fn[type] (= (name type) "ERRO")))
-          ))
+          (filter (fn[type] (= (name type) "ERRO")))))
   nil)
 
 (defmacro init-prod!
