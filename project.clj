@@ -139,8 +139,8 @@
     :cljsbuild
     {:builds
      {:app
-      {:source-paths ["env/dev/cljs"]
-       :compiler {:main "demo.core.main"
+      {:source-paths ["env/dev/cljs" "demo"]
+       :compiler {:main "demo.core"
                   :source-map true}}}}}
 
    :uberjar
