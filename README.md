@@ -16,11 +16,12 @@ filtering and syntax highlighting for clojure data structures:
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
 * Clone existing tabs to quickly apply different search terms.
+* Customize rendering of any log data (attach render function to any log
+  message that emits hiccup)
 * Log is asynchronous so you don't have to worry about blocking.
 * Click on any log message and dump the object to your javascript console (as an
   object). This allows you (at least in Chrome) to inspect the object. This even
-  allows you to log functions and invoke them (after assigning them to a global
-  variable with a right click) in your javascript console.
+  allows you to log functions and invoke them in your javascript console.
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
