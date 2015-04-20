@@ -311,7 +311,7 @@ You can find an example of how to use that function in the source code of this
 library.
 
 ## Listening for logs
-Every log is pushed on a `mult` channel (see core.async docs) which you can tab
+Every log is pushed on a `mult` channel (see core.async docs) which you can tap
 into. The channel is in `:log-pub-ch` of the `db` atom.
 This allows you to also forward the logs to other places (localStorage or a
 server).
