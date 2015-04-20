@@ -6,6 +6,7 @@
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
+   [reagent.core :as r]
    [klang.core :refer [tab->type!  tab->ns!  tab->ns*!  *db* logger
                        ns*->color!  ns->color!  log!  raw-log!] :as k]))
 
@@ -46,30 +47,24 @@
   (log! :TRAC "Trace log" true)
   (log! :DEBG "No ns")
   (log! :INFO "No ns")
-  (log! :FATAL "fatal stuff")
+  (log! :FATA "fatal stuff")
   (log! :CRIT "World peace not achieved.")
-  (log! *db* :FATAL "With db and stuff")
+  (log! *db* :FATA "With db and stuff")
   (log! *db* :WARN "Warn and stuff")
-
-  (let [lg (logger ::ERRO)]
-    (lg {:test "foo"} :bar "this is a problem")
-    (lg {:test "twooo"}))
-
-  (let [lg (logger ::ERRO)]
-    (lg {:test "foo"} :bar)
-    (lg nil)
-    (lg :function  (fn[name] (str "Hello " name)))
-    ;; Long message should wrap
-    (lg :test "This is a longer test message so we can see wrapping it around."
-        :nil=also-works nil
-        nil 'symbols 'also 'work
-        :this :should :really ["wrap" :around "on your small browser window"])))
+  (log! ::INFO {:test "foo"} :bar "this is a problem")
+  (log! ::WARN {:test "twooo"})
+  (log! ::ERRO {:test "foo"} :bar)
+  (log! ::INFO nil)
+  (log! ::DEBG :functions-can-be-logged (fn[name] (str "Hello " name)))
+  (log! ::TRAC
+        :nil-also-works nil 'symbols 'also 'work
+        :this :should ["wrap" :around "in your browser window"]))
 
 (defn demo! []
   (k/init-single-mode!) ;; Sets *db*
   (k/init!)
   (k/default-config!)
-  (k/show!)
+  ;;(k/show!)
   (ex-log-data))
 
 
@@ -77,6 +72,23 @@
 
 ;; TODO: Create a demo UI to allow switching sources on-off
 ;; @gen-logs
+
+(defonce gen (r/atom false))
+
+;;(defonce  )
+
+(defn toggle-generator [_]
+  (swap! gen not))
+
+(defn demo-ui [gen]
+  [:div
+   [:p "Press the key \"l\" to view the logs."]
+   [:a {:style {:cursor "pointer" :text-decoration "underline"}
+        :on-click toggle-generator
+        }
+    (when @gen "Stop ") "generate Random data"]])
+
+(r/render [demo-ui gen] js/document.body)
 
 (demo!)
 
