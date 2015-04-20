@@ -438,6 +438,10 @@ source for others to use (but not used by the default renderer).
 For instance: How to render large data structures? Popup? How to render
 structs?
 
+Offer a standalone HTML file that includes all the code, css etc of klang and
+that can be started with something simple like pythons SimpleHTTPServer.
+The have that listen on a few websocket connections where clients (another
+browser window or server) can connect to and push logs.
 
 # Why "Klang"?
 Timbre, the de-facto clojure logging library has do with sound.
