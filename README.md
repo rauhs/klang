@@ -247,7 +247,7 @@ This is a long template. But I think it's better to not include this in Klang
 since it's more flexible if users set it up themself.
 
 You can also add file name in the meta information of `&form` but I see no need
-for it dues to namespaced keywords.
+for it due to namespaced keywords.
 
 Then setup and call your logging like so:
 
@@ -255,7 +255,7 @@ Then setup and call your logging like so:
 ;; -- filename: my/app/setup.cljs
 (ns my.app.setup
   (:require-macros
-   [klang.macros :refer [log!] :as lgmacros]))
+   [your.project.logging :refer [log!] :as lgmacros]))
 
 (lgmacros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
 
