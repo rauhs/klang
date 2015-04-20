@@ -63,15 +63,6 @@ The following is the simplest usage:
 ;; Setups reasonable default colors for :INFO etc
 (k/default-config!)
 
-;; Setup some new tabs (left menu)
-;; Only hold events from one namespace
-(k/tab->ns! k/*db* :my-tab-name "my.ns" "some.other.ns")
-;; Only hold events from ns and it's children
-;; so here: my.ns.* and other.ns.*
-(k/tab->ns*! k/*db* :my-ns* "my.ns" "other.ns")
-;; Or only hold certain types. Yes same tab name as tab->ns! call:
-(k/tab->type! k/*db* :my-tab-name :INFO :WARN)
-
 ;; Define a logger that always logs as ::INFO
 (def lg
   (k/logger ::INFO))
@@ -95,6 +86,19 @@ The following is the simplest usage:
 ;; Or just press `l` if you applied (default-config!)
 
 (k/hide!) ;; hide it again.
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Note we can also create some tabs which hold only certain events:
+
+;; Setup some new tabs (left menu)
+;; Only hold events from one namespace
+(k/tab->ns! k/*db* :my-tab-name "my.ns" "some.other.ns")
+;; Only hold events from ns and it's children
+;; so here: my.ns.* and other.ns.*
+(k/tab->ns*! k/*db* :my-ns* "my.ns" "other.ns")
+;; Or only hold certain types. Yes same tab name as tab->ns! call:
+(k/tab->type! k/*db* :my-tab-name :INFO :WARN)
+
 ```
 
 There is nothing special about `::INFO`, you can use any arbitrary keyword.
