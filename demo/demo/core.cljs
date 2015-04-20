@@ -5,9 +5,9 @@
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
-   [klang.core :refer [tab->type!  tab->ns!  *db*
-                       ns*->color  log! raw-log!
-                       ]]
+   [klang.core :refer [tab->type!  tab->ns! tab->ns*!  *db*
+                       logger ns*->color  log! raw-log!]
+    :as k]
    ))
 
 
@@ -44,12 +44,8 @@
                     :ns "my.ns.one"}]]
     ;; Will receive a time for the channel listener
     (raw-log! *db* lg))
-  ;; These will log to the console
-  ;; OBSOLETE:
-  #_(let [lg (logger ::CONSOLE)]
-    (lg {:test "foo"} :bar))
 
-  (log! :TRAC "World peace not achieved.")
+  (log! :TRAC "Trace log" true)
   (log! :DEBG "No ns")
   (log! :INFO "No ns")
   (log! :FATAL "fatal stuff")
@@ -81,7 +77,8 @@
 
 
 ;; Deref to generate logs
+;; TODO: Create a demo UI to allow switching sources on-off
 ;; @gen-logs
 
-(k/demo!)
+(demo!)
 
