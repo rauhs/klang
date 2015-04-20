@@ -381,6 +381,13 @@ You can `tap` into it and react however you like.
 Events include showing/hiding the log overlay, new log, freezing the channel etc
 etc.
 
+## Increasing freeze buffer
+If you freeze the UI (aka "pause") you'll fill up a `core.async` sliding
+buffer. This means you will lose log messages eventually unless you thaw the
+UI.
+The current log buffer is 1000 messages but you may increase it by manually
+`swap!`ing the db field `:freeze-buffer`
+
 # Suggested log types
 I'll suggest those log types in order to have same string lengths (similar to
 supervisord):
