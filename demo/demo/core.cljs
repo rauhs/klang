@@ -6,23 +6,14 @@
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
-   [klang.core :refer [tab->type! 
-                       tab->ns!
-                       tab->ns*!
-                       *db*
-                       logger
-                       ns*->color!
-                       ns->color!
-                       log!
-                       raw-log!]
-    :as k]))
+   [klang.core :refer [tab->type!  tab->ns!  tab->ns*!  *db* logger
+                       ns*->color!  ns->color!  log!  raw-log!] :as k]))
 
 (def gen-logs
   (delay
    (go-loop [i 0]
      (<! (timeout 100))
      (log! ::INFO {:gen i})
-     ;;(l i)
      (recur (+ i 1)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -90,8 +81,9 @@
 (demo!)
 
 ;;(macros/init-debug-prod!)
-(macros/init-dev!)
+;;(macros/init-dev!)
 ;;(macros/log! ::WARN :hi-with-macros)
 
-(macros/info! :info-ex "logging")
-(macros/warn! :dont-do-this "because")
+;;(macros/info! :info-ex "logging")
+;;(macros/warn! :dont-do-this "because")
+

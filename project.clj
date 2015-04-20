@@ -67,6 +67,14 @@
                             :pseudo-names true
                             :optimizations :advanced
                             :pretty-print  true}}
+    :demo {:source-paths ["src/cljs" "demo"]
+                 :compiler {:output-to     "resources/public/cljs/demo/app.js"
+                            :output-dir    "resources/public/cljs/demo/out"
+                            :asset-path   "js/out"
+                            :output-wrapper false
+                            :pseudo-names true
+                            :optimizations :advanced
+                            :pretty-print  true}}
     :prod {:source-paths ["src/cljs"]
            :compiler {:output-to     "resources/public/cljs/production/app.js"
                       :output-dir    "resources/public/cljs/production/out"
@@ -140,7 +148,7 @@
     {:builds
      {:app
       {:source-paths ["env/dev/cljs" "demo"]
-       :compiler {:main "demo.core"
+       :compiler {:main "klang.dev"
                   :source-map true}}}}}
 
    :uberjar

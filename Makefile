@@ -14,3 +14,8 @@ prod:
 clean :
 	lein cljsbuild clean
 	lein clean
+
+demo :
+	;
+
+
