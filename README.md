@@ -339,14 +339,22 @@ library.
 You can change the types colore like so:
 
 ```clj
-(type->color db :TRAC "lightblue")
+(type->color! db :TRAC "lightblue")
 ```
 
 You can change the color of namespaces with the `ns->` functions:
 ```clj
-(ns*->color db "my.ns" "red")
+(ns*->color! db "my.ns" "red")
 ```
-(defn pred->color
+
+In general you can map a predicate to a color, in fact the above function are
+implemented with this function:
+```clj
+(defn type->color
+  "Given a type keyword (like :INFO), render the type in color."
+  [db type color]
+  (pred->color! db (partial = type) :type color))
+```
 
 ## Pit falls
 Since HTML is XML is nested. You have to watch out when you attach multiple
@@ -356,6 +364,8 @@ solve this.
 Watch out if you get an error saying something about some hiccup data like
 `[:span ....`.
 
+A solution is to keep the maximum number of renderer that act on a field of the
+log message to one.
 
 ## Listening for logs
 Every log is pushed on a `mult` channel (see core.async docs) which you can tap

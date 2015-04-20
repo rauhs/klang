@@ -1,15 +1,21 @@
-(ns ^:figwheel-always demo.core
+(ns ^:figwheel-always
+  demo.core
   (:require-macros
    [klang.macros :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
-   [klang.core :refer [tab->type!  tab->ns! tab->ns*!  *db*
-                       logger ns*->color  log! raw-log!]
-    :as k]
-   ))
-
+   [klang.core :refer [tab->type! 
+                       tab->ns!
+                       tab->ns*!
+                       *db*
+                       logger
+                       ns*->color!
+                       ns->color!
+                       log!
+                       raw-log!]
+    :as k]))
 
 (def gen-logs
   (delay
@@ -22,7 +28,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; For development
 (defn ex-log-data []
-  (ns*->color *db* "klang.core" "yellow")
+  (ns*->color! *db* "klang.core" "yellow")
+  (ns->color! *db* "my.ns" "green")
   (tab->type! *db* :erro :ERRO)
   (tab->type! *db* :errwarn :ERRO :WARN)
   (tab->ns! *db* :my.ns "my.ns")
@@ -67,8 +74,7 @@
         nil 'symbols 'also 'work
         :this :should :really ["wrap" :around "on your small browser window"])))
 
-(defn demo!
-  []
+(defn demo! []
   (k/init-single-mode!) ;; Sets *db*
   (k/init!)
   (k/default-config!)

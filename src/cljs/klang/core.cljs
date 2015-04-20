@@ -773,7 +773,7 @@
 ;; leftmost parts of the namespace.
 ;; What color space to use? So many questions...
 
-(defn pred->color
+(defn pred->color!
   "Given a predicate pred? and which (:ns, :type) it wraps the part of
   the log message in a span and applies the color.
   Note that if you get an error here saying that name doesn't support
@@ -794,18 +794,20 @@
                       (name t)])) ;; name for :ns & :type
         msg)))))
 
-(defn type->color
+(defn type->color!
   "Given a type keyword (like :INFO), render the type in color."
   [db type color]
-  (pred->color db (partial = type) :type color))
+  (pred->color! db (partial = type) :type color))
 
-(defn ns*->color
+(defn ns->color!
+  "Gives the namespace ns a color."
+  [db ns-str color]
+  (pred->color! db (partial = ns-str) :ns color))
+
+(defn ns*->color!
   "Gives all namespaces that are children of ns* a color."
   [db ns* color]
-  (pred->color db
-               (fn [ns] (or (= ns* ns)
-                            (parent? ns* ns)))
-               :ns color))
+  (pred->color! db (partial self-or-parent? ns*) :ns color))
 
 ;; This is mostly obsolete now that we can click on a message and log it.
 (defn msg->console!
@@ -850,13 +852,13 @@
 
 ;; http://www.w3schools.com/cssref/css_colornames.asp
 (defn color-types! [db]
-  (type->color db :TRAC "lightblue")
-  (type->color db :DEBG "gray")
-  (type->color db :INFO "steelblue")
-  (type->color db :ERRO "red")
-  (type->color db :CRIT "darkred")
-  (type->color db :FATAL "firebrick")
-  (type->color db :WARN "orange"))
+  (type->color! db :TRAC "lightblue")
+  (type->color! db :DEBG "gray")
+  (type->color! db :INFO "steelblue")
+  (type->color! db :ERRO "red")
+  (type->color! db :CRIT "darkred")
+  (type->color! db :FATAL "firebrick")
+  (type->color! db :WARN "orange"))
 
 (defn default-config!
   "Sets up key presses and some default tabs."
