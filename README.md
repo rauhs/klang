@@ -323,10 +323,10 @@ tabs.
 You're not limited to filter by `:type` and `:ns` however, you can register
 arbitrary transducers for a tab.
 This allows you to filter and even modify the log messages.
-See the function `tab->transducer`.
+See the function `tab->transducer!`.
 You can find an example of how to use that function in the source code of this
 library.
-In fact, `tab->type` and `tab->ns` are implemented using `tab->transducer`.
+In fact, `tab->type!` and `tab->ns!` are implemented using `tab->transducer!`.
 
 ## Message rendering
 By default the messages get transformed with `js->clj` function and then get
@@ -350,7 +350,7 @@ You can change the color of namespaces with the `ns->` functions:
 In general you can map a predicate to a color, in fact the above function are
 implemented with this function:
 ```clj
-(defn type->color
+(defn type->color!
   "Given a type keyword (like :INFO), render the type in color."
   [db type color]
   (pred->color! db (partial = type) :type color))
