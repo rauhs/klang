@@ -368,13 +368,9 @@
 
 (def inject-highlightjs-css
   (delay 
-   (do 
-     ;; TODO: Get this css from somewhere else to be nice?
-     (let [styleel (dom/createDom "style"
-                                 #js{:type "text/css"})] 
-       ;; document.head is >IE9
-       (set! (.. styleel -innerHTML) css-molokai)
-       (dom/appendChild js/document.head styleel)))))
+   (let [styleel (dom/createDom "style")] 
+     (set! (.. styleel -innerHTML) css-molokai)
+     (dom/appendChild js/document.head styleel))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Log message data manip

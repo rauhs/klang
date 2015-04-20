@@ -15,7 +15,14 @@ clean :
 	lein cljsbuild clean
 	lein clean
 
-demo :
-	;
+print-%: ; @echo $*=$($*)
 
+.PHONY: demo
+demo: demo.html
+
+demo.html :
+	echo "<html><head></head>" > $@
+	echo "<body><script>" >> $@
+	cat ./resources/public/cljs/demo/app.js >> $@
+	echo "</script></body></html>" >> $@
 
