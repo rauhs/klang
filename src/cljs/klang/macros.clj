@@ -56,9 +56,8 @@
          (map (fn[type] (keyword (name type))))))
 
 (defmacro init-dev! []
-  (line-nr! true)
+  ;;(line-nr! true)
   nil)
-
 
 (defmacro init-debug-prod!
   "Sets up logging for production "
@@ -92,6 +91,13 @@
     (if add-line-nr
       `(~logger ~nslv-td ~(str "#" (:line (meta &form))) ~@msg)
       `(~logger ~nslv-td ~@msg))))
+
+(defmacro info! [& msg]
+  `(log! ~(keyword (name (ns-name *ns*)) "INFO") ~@msg))
+
+(defmacro warn! [& msg]
+  `(log! ~(keyword (name (ns-name *ns*)) "WARN") ~@msg))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Other utils:
@@ -131,11 +137,11 @@
   nil)
 
 #_(defmacro log!
-    "Don't use this. Write your own."
-    [ns_type & msg]
-    ;; when-let returns nil which emits no code so we're good
-    (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
-      `(klang.core/log! ~nslv-td ~@msg)))
+  "Don't use this. Write your own."
+  [ns_type & msg]
+  ;; when-let returns nil which emits no code so we're good
+  (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
+    `(klang.core/log! ~nslv-td ~@msg)))
 
 
 (defmacro deflogger

@@ -246,6 +246,15 @@ of code and everybody can adapt it to their needs:
       `(~logger ~nslv-td ~(str "#" (:line (meta &form))) ~@msg)
       `(~logger ~nslv-td ~@msg))))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Some other convenience function to make logging easier:
+
+(defmacro info! [& msg]
+  `(log! ~(keyword (name (ns-name *ns*)) "INFO") ~@msg))
+
+(defmacro warn! [& msg]
+  `(log! ~(keyword (name (ns-name *ns*)) "WARN") ~@msg))
+
 ;; Note that while writing macros you may need some figwheel restarts in case of
 ;; crashes and/or errors.
 ```
@@ -262,19 +271,17 @@ Then setup and call your logging like so:
 ;; -- filename: my/app/setup.cljs
 (ns my.app.setup
   (:require-macros
-   [your.project.logging :refer [log!] :as lgmacros]))
+   [your.project.logging :refer [log! info! warn!] :as lgmacros]))
 
 (lgmacros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
 
 (log! ::INFO "hello" :there)
+(info! :I "like" :chatting)
+(warn! :a-lot)
 ```
 
 You can then switch over to production and get rid of all log calls or forward
 them to your own function.
-
-You now lost the `logger` convenience function.
-But you have gained total controll over what makes it into your clojurescript
-(and javascript) code.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser window but

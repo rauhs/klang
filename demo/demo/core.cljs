@@ -83,10 +83,22 @@
 
 
 ;; Deref to generate logs
+
 ;; TODO: Create a demo UI to allow switching sources on-off
 ;; @gen-logs
 
 (demo!)
 
-(macros/init-debug-prod!)
-(macros/log! ::WARN :hi-with-macros)
+
+;;(macros/init-debug-prod!)
+(macros/init-dev!)
+;;(macros/log! ::WARN :hi-with-macros)
+
+(macros/info! :info "logging")
+(macros/warn! :warn "logging")
+
+
+
+
+
+
