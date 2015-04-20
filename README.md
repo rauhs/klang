@@ -411,6 +411,9 @@ supervisord):
 
 * Improve performance by only rendering the subset of log messages that are seen
   for the current scrolling position.
+* Run the tab transducers as xform argument in core.async channel. This would
+  allow an easy profiling transducer. The `single-transduce` silliness prevents
+  this from working.
 * Go through the `TODO:` items in `klang/core.cljs`
 
 ## Ideas
