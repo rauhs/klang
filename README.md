@@ -344,7 +344,8 @@ You can change the types colore like so:
 
 You can change the color of namespaces with the `ns->` functions:
 ```clj
-(ns*->color! db "my.ns" "red")
+(ns*->color! db "my.ns" "red") ;; my.ns.*
+(ns->color! db "my.other" "blue") ;; my.other only, no child NS
 ```
 
 In general you can map a predicate to a color, in fact the above function are
