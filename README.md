@@ -221,9 +221,10 @@ of code and everybody can adapt it to their needs:
   (line-nr! false)
   (strip-ns!)
   (swap! xforms conj
-         ;; Only emit error messages log calls:
+         ;; Only emit :ERRO and :WARN messages log calls:
          (comp 
-          (filter (fn[type] (= (name type) "ERRO")))))
+          (filter #(some (partial = (name %))
+                         ["ERRO" "WARN"]))))
   nil)
 
 (defmacro init-prod!

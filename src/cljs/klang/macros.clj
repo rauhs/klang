@@ -59,17 +59,19 @@
   (line-nr! true)
   nil)
 
+
 (defmacro init-debug-prod!
   "Sets up logging for production "
   []
-  (logger! 'my.app.log/log->server!)
+  ;;(logger! 'my.app.log/log->server!)
   (line-nr! false)
   (strip-ns!)
   (swap! xforms conj
          ;; Only allow error message
          (comp 
-          (filter (fn[type] (= (name type) "ERRO")))
-          ))
+          ;;(filter (fn[type] (= (name type) "ERRO")))
+          (filter #(some (partial = (name %))
+                         ["ERRO" "WARN"]))))
   nil)
 
 (defmacro init-prod!
@@ -129,11 +131,11 @@
   nil)
 
 #_(defmacro log!
-  "Don't use this. Write your own."
-  [ns_type & msg]
-  ;; when-let returns nil which emits no code so we're good
-  (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
-    `(klang.core/log! ~nslv-td ~@msg)))
+    "Don't use this. Write your own."
+    [ns_type & msg]
+    ;; when-let returns nil which emits no code so we're good
+    (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
+      `(klang.core/log! ~nslv-td ~@msg)))
 
 
 (defmacro deflogger
