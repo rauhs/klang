@@ -348,8 +348,6 @@
        ;; document.head is >IE9
        (dom/appendChild js/document.head linkel)))))
 
-@inject-highlightjs-css
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Log message data manip
 (defn valid-log?
@@ -753,6 +751,7 @@
   log. Uses js->clj to ensure the :msg is cojure.
   TODO: We should highlight functions as javascript and not clojure!"
   [db]
+  @inject-highlightjs-css
   (register-transducer!
    db :highlight-msg
    (map
@@ -869,9 +868,7 @@
    (install-shortcut! db "l")
    (register-highlighter! db)
    (sensible-time-format db)
-   (r/render [render-overlay db] (get-dom-el))
-   ))
-
+   (r/render [render-overlay db] (get-dom-el))))
 
 ;;(macros/init-dev!)
 ;;(macros/init-prod!)

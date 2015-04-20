@@ -65,13 +65,15 @@ The following is the simplest usage:
 ;; Or only hold certain types. Yes same tab name as tab->ns! call:
 (k/tab->type! k/*db* :my-tab-name :INFO :WARN)
 
+;; Define a logger that always logs as ::INFO
 (def lg
   (k/logger ::INFO))
 
+;; Now call the ::INFO logger with whatever parameters you like
 (lg :db-init "Db initiaized" 'another-arbitrary-param)
 (lg :validation :ok {:user userid})
 
-;; Or without the indirection:
+;; Or without the indirection of k/logger:
 (k/log! ::INFO "User logged in")
 
 ;; Or the low level raw log:
@@ -81,9 +83,11 @@ The following is the simplest usage:
              :ns "whatever.ns.you.like"
              :msg [:one :two "foo"]})
 
-;; Show the logs.
+;; Show the logs in an div overlay:
 (k/show!)
 ;; Or just press `l` if you applied (default-config!)
+
+(k/hide!) ;; hide it again.
 ```
 
 There is nothing special about `::INFO`, you can use any arbitrary keyword.
@@ -105,7 +109,7 @@ Each log message *internally* has the following fields:
 * `:ns` is a `string` holding the namespace where the log came from. User
   supplied or the empty string "".
 * `:type` is a `keyword` specifying the "type" of a log message. This can really
-  be anything you want. But most people will use `:INFO`, `:ERROR` or `:WARN`
+  be anything you want. But most people will use `:INFO`, `:ERRO` or `:WARN`
   and the like.
 * `:msg` the actual log message. Is always a vector, even if a single item. This
   allows for arbitrary parameters passed to the various logging functions.
@@ -131,7 +135,7 @@ that allows you to elide whatever logs you don't want to make it into function
 calls.
 
 Personally, I wouldn't even want any Klang code to stay in a production app
-since the logging code of klang isn't too small.
+since the logging code of Klang isn't too small.
 Hence, in production I want to log a subset of messages (such as warn/error/info
 but *not* trace/debug) to be pushed into a global core.async channel where I can
 send them to my server (or wherever) in case an error occurs.
@@ -143,32 +147,34 @@ This is why I've chosen to give this recipe that only has a few lines
 of code and everybody can adapt it to their needs:
 
 ```clj
-;; file-name: your.project/logging.clj
+;; file-name: your/project/logging.clj -- note: /Not/ cljs
 ;; 
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
-;; be modified easily to use simple functions.
+;; be modified easily to use simple (predicate) functions.
 ;; This macro file (.clj) is used in both, your production and dev environment.
 ;; You'll call them differently by using different :source-paths in your
 ;; leiningen configuration.
 
 ;; The global atom holds the filters/transducers that determine if the log! call
 ;; should be elided or not:
-;; This lives only during the compilation phase and will not result in any
-;; javascript code
+;; These transducers live only during the compilation phase and will not result
+;; in any javascript code.
 ;; Q: Why transducers and not just an array of predicate functions?
 ;; A: We may be interested in changing (ie. (map..)) the passed in keyword. For
 ;; instance by removing the namespace from the keyword.
-;; The function transduces on (namespaced) keywords which are the log namespace
-;; and type
+;; The function transduces on (namespaced) keywords which is just the very first
+;; argument of the `log!' function.
+
+;; The transducers that are applied before emitting code:
 (defonce xforms (atom [(filter (constantly true))]))
 
-;; The function that is called for logging.
+;; The clojurescript function that is called when we emit code with the macro:
 (def logger 'klang.core/log!)
 
 (defn logger! [log-sym]
   (alter-var-root (var logger) (fn[_] log-sym)))
 
-;; If we should add line information to each log! call
+;; True if the macro should add line information to each log! call
 (def add-line-nr false)
 
 (defn line-nr! [tf]
@@ -184,12 +190,14 @@ of code and everybody can adapt it to their needs:
 ;; You may also make this a macro if you want to call it from cljs
 (defn strip-ns!
   "Adds a transducer so that namespace information is stripped from the log!
-  call"
+  call. So: ::FOO -> :FOO"
   []
   (swap! xforms conj
          (map (fn[type] (keyword (name type)))))
   nil)
 
+;; You'll often see return nil here because we don't want to return anything in
+;; the macro calls
 (defmacro init-dev! []
   (line-nr! true)
   nil)
@@ -197,18 +205,19 @@ of code and everybody can adapt it to their needs:
 (defmacro init-debug-prod!
   "Sets up logging for production "
   []
+  ;; For production we call this log function which can do whatever:
   (logger! 'my.app.log/log->server!)
   (line-nr! false)
   (strip-ns!)
   (swap! xforms conj
-         ;; Only allow error message
+         ;; Only emit error messages log calls:
          (comp 
           (filter (fn[type] (= (name type) "ERRO")))
           ))
   nil)
 
 (defmacro init-prod!
-  "Productin. Strip all logging calls."
+  "Production: Strip all logging calls."
   []
   (logger! nil) ;; Not needed but just in case
   (swap! xforms conj
@@ -227,11 +236,11 @@ of code and everybody can adapt it to their needs:
       `(~logger ~nslv-td ~@msg))))
 
 ;; Note that while writing macros you may need some figwheel restarts in case of
-;; crashes.
+;; crashes and/or errors.
 ```
 
-This is a long template. But I think it's better to not include this in the
-library since it's more flexible if users set it up themself.
+This is a long template. But I think it's better to not include this in Klang
+since it's more flexible if users set it up themself.
 
 You can also add file name in the meta information of `&form` but I see no need
 for it dues to namespaced keywords.
@@ -239,17 +248,22 @@ for it dues to namespaced keywords.
 Then setup and call your logging like so:
 
 ```clj
+;; -- filename: my/app/setup.cljs
 (ns my.app.setup
   (:require-macros
    [klang.macros :refer [log!] :as lgmacros]))
 
-(macros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
+(lgmacros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
 
 (log! ::INFO "hello" :there)
 ```
 
 You can then switch over to production and get rid of all log calls or forward
 them to your own function.
+
+You now lost the `logger` convenience function.
+But you have gained total controll over what makes it into your clojurescript
+(and javascript) code.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser window but
@@ -272,8 +286,8 @@ messages to a browser window and then displaying them with Klang. The times of
 your log message wouldn't be touched since you can supply a date/time with
 `raw-log!`.
 
-* TODO: Code a timbre forwarder that also sends the log messages to a websocket
-  for displaying with klang.
+* TODO: Code a timbre appender that also sends the log messages to a websocket
+  for displaying with Klang.
 
 # Customizing
 
@@ -289,7 +303,9 @@ library.
 In fact, `tab->type` and `tab->ns` are implemented using `tab->transducer`.
 
 ## Message rendering
-By default 
+By default the messages get transformed with `js->clj` function and then get
+syntax highlighted by highlight-js.
+You can change this by not applying the default-config 
 
 You can find an example of how to use that function in the source code of this
 library.
