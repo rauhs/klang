@@ -61,7 +61,6 @@
     (lg {:test "foo"} :bar "this is a problem")
     (lg {:test "twooo"}))
 
-
   (let [lg (logger ::ERRO)]
     (lg {:test "foo"} :bar)
     (lg nil)
@@ -78,7 +77,7 @@
   (k/init!)
   (k/default-config!)
   (k/show!)
-  (k/ex-log-data))
+  (ex-log-data))
 
 
 ;; Deref to generate logs
