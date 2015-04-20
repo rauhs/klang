@@ -368,6 +368,11 @@ Watch out if you get an error saying something about some hiccup data like
 A solution is to keep the maximum number of renderer that act on a field of the
 log message to one.
 
+This can be achieved by de-normalizing the renderers and attach fewer but more
+powerful renderers to the log messages.
+You can always just attach exactly once rather complicated renderer instead of
+multiple small ones.
+
 ## Listening for logs
 Every log is pushed on a `mult` channel (see core.async docs) which you can tap
 into. The channel is in `:log-pub-ch` of the `db` atom.
