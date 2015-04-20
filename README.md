@@ -1,8 +1,11 @@
 # Klang - A Clojurescript logging libary/viewer
 
 This library offers a simple logging interface in clojurescript for
-usage in the browser. It allows for powerful (user defined) log
-filtering and syntax highlighting for clojure data structures:
+usage in the browser.
+Note: You can also use this to send your server logs to a browser window for
+easier inspection. So you backend folks might also be interested in this.
+It allows for powerful (user defined) log filtering and syntax highlighting for
+clojure data structures:
 
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
 
