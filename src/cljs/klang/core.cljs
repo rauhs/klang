@@ -209,7 +209,7 @@
   ;;(log-console "render-msg")
   ^{:key (:uuid lg-ev)} ;; Performance?
   [:li {:style {:list-style-type "none"}}
-   ;; TODO: Could also accept :render :msg which renders the entire lg-ev?
+   ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
    ;; TODO: Refactor into a let-fn and func calls
    (if-let [rndr (get-in lg-ev [:render :time])]
      ;; Still need to compose all the given render functions here

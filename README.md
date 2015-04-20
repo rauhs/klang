@@ -294,6 +294,25 @@ your log message wouldn't be touched since you can supply a date/time with
   for displaying with Klang.
 
 # Customizing
+In general Klang allows for a lot of customization. In fact, most of fanzy
+coloring you see in the above screenshot is added by the standard API. It's not
+baked in. The default renderes wouldn't even render the DateTime of a log
+message in a decent format. 
+
+I encourage people to check out the source of `klang/core.cljs`, right at the
+end of the file you'll find a comment `functionality through the standard API`.
+
+## Renderers for logs
+In the above section I talked about the log message layout (`:ns, :time, :type,
+:msg`) but that was only half the truth.
+The renderer (reagent) also looks for `[:render :type], [:render :ns] ...`.
+Check out the function `render-msg`.
+
+These renderers will be `comp` and called. You may choose to supply your own
+render instead of the syntax highlighting one.
+You can also change the DateTime layout and coloring.
+Some convenience functions are supplied to make it easy to color types,
+namespaces etc.
 
 ## Tabs
 The example code above already defined some code that showed off defining custom
@@ -313,6 +332,27 @@ You can change this by not applying the default-config
 
 You can find an example of how to use that function in the source code of this
 library.
+
+You can change the types colore like so:
+
+```clj
+(type->color db :TRAC "lightblue")
+```
+
+You can change the color of namespaces with the `ns->` functions:
+```clj
+(ns*->color db "my.ns" "red")
+```
+(defn pred->color
+
+## Pit falls
+Since HTML is XML is nested. You have to watch out when you attach multiple
+renderer. The second render will receive the previous render result and you'll
+have to deal with hiccup data. I'm not sure if there is a way to elegantly
+solve this.
+Watch out if you get an error saying something about some hiccup data like
+`[:span ....`.
+
 
 ## Listening for logs
 Every log is pushed on a `mult` channel (see core.async docs) which you can tap
@@ -344,6 +384,10 @@ supervisord):
 * Improve performance by only rendering the subset of log messages that are seen
   for the current scrolling position.
 * Go through the `TODO:` items in `klang/core.cljs`
+
+# Why "Klang"?
+Timbre, the de-facto clojure logging library has do with sound.
+*Klang* is the German word for *tone/sound*.
 
 ## License
 
