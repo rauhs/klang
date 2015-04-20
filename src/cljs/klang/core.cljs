@@ -232,11 +232,12 @@
      :on-click (fn[_]
                  (do 
                    (js/console.group
-                    "%s/%s -- %O" (:ns lg-ev)
+                    "%s/%s -- %s" (:ns lg-ev)
                     (name (:type lg-ev))
                     (tf/unparse (:hour-minute-second-ms tf/formatters)
                                 (:time lg-ev)))
-                   (mapv #(js/console.log "%O" %) (:msg lg-ev))
+                   ;;(mapv #(js/console.log "%O" %) (:msg lg-ev))
+                   (mapv #(js/console.dir %) (:msg lg-ev))
 
                    (js/console.groupEnd)
                    ))}
