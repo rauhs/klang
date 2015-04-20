@@ -89,16 +89,9 @@
 
 (demo!)
 
-
 ;;(macros/init-debug-prod!)
 (macros/init-dev!)
 ;;(macros/log! ::WARN :hi-with-macros)
 
-(macros/info! :info "logging")
-(macros/warn! :warn "logging")
-
-
-
-
-
-
+(macros/info! :info-ex "logging")
+(macros/warn! :dont-do-this "because")

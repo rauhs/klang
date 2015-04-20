@@ -442,8 +442,7 @@
                ;; The .test might be undefined if the search str is empty?
                (if (undefined? test)
                  true ;; Include all of them then
-                 test)
-               )))))
+                 test))))))
 
 (defn register-transducer!
   [db key transducer]
@@ -875,14 +874,6 @@
    (register-highlighter! db)
    (sensible-time-format db)
    (r/render [render-overlay db] (get-dom-el))))
-
-;;(macros/init-dev!)
-;;(macros/init-prod!)
-;;(macros/init-debug-prod!)
-
-;; And also won't generate any JS code:
-;; (macros/log! ::THIS_WONT_LOG "LOOK_FOR_ME_IN_JS_CODE")
-;; (macros/log! ::INFO :also :test :multi "args just in case" nil)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

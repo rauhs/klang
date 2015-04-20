@@ -374,7 +374,7 @@ renderer. The second render will receive the previous render result and you'll
 have to deal with hiccup data. I'm not sure if there is a way to elegantly
 solve this.
 Watch out if you get an error saying something about some hiccup data like
-`[:span ....`.
+`[:span ...]`.
 
 A solution is to keep the maximum number of renderer that act on a field of the
 log message to one.
@@ -427,6 +427,8 @@ supervisord):
   allow an easy profiling transducer. The `single-transduce` silliness prevents
   this from working.
 * Go through the `TODO:` items in `klang/core.cljs`
+* We should probably cut off ridicioulsy long messages and just allow the user
+  to click on it to dump the object to the console.
 
 ## Ideas
 
@@ -435,6 +437,7 @@ idea, feel free to submit a pull request. We can always just leave it in the
 source for others to use (but not used by the default renderer).
 For instance: How to render large data structures? Popup? How to render
 structs?
+
 
 # Why "Klang"?
 Timbre, the de-facto clojure logging library has do with sound.
