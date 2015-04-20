@@ -9,24 +9,15 @@
   :dependencies [;; CORE
                  ;;[org.clojure/clojure "1.6.0"]
                  [org.clojure/clojure "1.7.0-beta1"]
-                 [org.clojure/tools.nrepl "0.2.10"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/clojurescript "0.0-3196" :scope "provided"]
-                 ;; Clojure
-                 [ring "1.3.2"]
-                 [ring/ring-defaults "0.1.4"]
-                 [prone "0.8.1"];;magnars/prone: Pretty ring exceptions
-                 [compojure "1.3.3"]
-                 [selmer "0.8.2"];;Django inspired templates
-                 [environ "1.0.0"];;Environment variables
                  ;; CLJS
-                 [secretary "1.2.3"];;Routing
-                 [binaryage/devtools "0.1.2"];;Pretty print console
-                 [cljsjs/react "0.13.1-0"]
-                 [reagent "0.5.0" :exclusions [cljsjs/react]]
-                 [com.andrewmcveigh/cljs-time "0.3.3"] ;; For Klang
+                 ;;[cljsjs/react "0.13.1-0"]
+                 ;;[reagent "0.5.0" :exclusions [cljsjs/react]]
+                 [reagent "0.5.0"]
+                 [com.andrewmcveigh/cljs-time "0.3.3"]
                  ;;[reagent-forms "0.4.9"]
-                 [reagent-utils "0.1.4"];;cookies,crypt,validation,session
+                 ;;[reagent-utils "0.1.4"];;cookies,crypt,validation,session
                  [cljsjs/highlight "8.4-0"] ;; for code highlighting
                  ;;[im.chit/purnam "0.5.1"];; js interop
                  ];; forgive me
@@ -69,13 +60,13 @@
                      :optimizations :none
                      :pretty-print  true}}
     :prod_debug {:source-paths ["src/cljs"]
-           :compiler {:output-to     "resources/public/cljs/production_debug/app.js"
-                      :output-dir    "resources/public/cljs/production_debug/out"
-                      :asset-path   "js/out"
-                      :output-wrapper false
-                      :pseudo-names true
-                      :optimizations :advanced
-                      :pretty-print  true}}
+                 :compiler {:output-to     "resources/public/cljs/production_debug/app.js"
+                            :output-dir    "resources/public/cljs/production_debug/out"
+                            :asset-path   "js/out"
+                            :output-wrapper false
+                            :pseudo-names true
+                            :optimizations :advanced
+                            :pretty-print  true}}
     :prod {:source-paths ["src/cljs"]
            :compiler {:output-to     "resources/public/cljs/production/app.js"
                       :output-dir    "resources/public/cljs/production/out"
@@ -110,6 +101,14 @@
     :dependencies [[ring-mock "0.1.5"]
                    [ring/ring-devel "1.3.2"]
                    [cider/cider-nrepl "0.9.0-SNAPSHOT"]
+                   [org.clojure/tools.nrepl "0.2.10"]
+                   ;; Clojure
+                   [ring "1.3.2"]
+                   [ring/ring-defaults "0.1.4"]
+                   [prone "0.8.1"];;magnars/prone: Pretty ring exceptions
+                   [compojure "1.3.3"]
+                   [selmer "0.8.2"];;Django inspired templates
+                   [environ "1.0.0"];;Environment variables
                    [leiningen "2.5.1"]
                    [figwheel "0.2.6"]
                    ;;[figwheel-sidecar "0.2.5"]
@@ -122,7 +121,7 @@
     ;; All the clojure containing files. Note we also need to add cljs since it
     ;; contains some debugging macros for cljs (but CLJS has macros only through
     ;; clojure)
-    :source-paths ["env/dev/clj" "env/dev/cljs"]
+    :source-paths ["env/dev/clj" "env/dev/cljs" "demo"]
     :plugins [[lein-figwheel "0.2.6"]]
 
     :injections [(require 'pjstadig.humane-test-output)
@@ -141,7 +140,7 @@
     {:builds
      {:app
       {:source-paths ["env/dev/cljs"]
-       :compiler {:main "klang.dev"
+       :compiler {:main "demo.core.main"
                   :source-map true}}}}}
 
    :uberjar

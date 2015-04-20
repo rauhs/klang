@@ -1,5 +1,4 @@
 (ns klang.core
-  ;;(:refer-clojure :exclude [reset!]);; We want our own reset!
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
    [klang.macros :refer [deflogger dochan] :as macros]
@@ -10,7 +9,6 @@
    [cljs-time.format :as tf]
    [cljsjs.highlight]
    [cljsjs.highlight.langs.clojure]
-   ;;[cljsjs.highlight.langs.json]
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
    ;; Google Closure
