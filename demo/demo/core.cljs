@@ -1,4 +1,4 @@
-(ns ;;^:figwheel-always
+(ns ^:figwheel-always
   demo.core
   (:require-macros
    [klang.macros :as macros]

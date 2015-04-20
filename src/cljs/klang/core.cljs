@@ -231,11 +231,15 @@
      ;; Not sure how many browsers allow this shortcut (console.dir)
      :on-click (fn[_]
                  (do 
-                   (js/console.log "---- %s/%s -- %O"
-                                   (:ns lg-ev)
-                                   (name (:type lg-ev))
-                                   (:time lg-ev))
-                   (mapv #(js/console.log "%O" %) (:msg lg-ev))))}
+                   (js/console.group
+                    "%s/%s -- %O" (:ns lg-ev)
+                    (name (:type lg-ev))
+                    (tf/unparse (:hour-minute-second-ms tf/formatters)
+                                (:time lg-ev)))
+                   (mapv #(js/console.log "%O" %) (:msg lg-ev))
+
+                   (js/console.groupEnd)
+                   ))}
     (if-let [rndr (get-in lg-ev [:render :msg])]
       [(apply comp rndr) (:msg lg-ev)]
       (str (:msg lg-ev)))]])
