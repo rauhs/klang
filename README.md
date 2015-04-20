@@ -22,6 +22,9 @@ filtering and syntax highlighting for clojure data structures:
 * Click on any log message and dump the object to your javascript console (as an
   object). This allows you (at least in Chrome) to inspect the object. This even
   allows you to log functions and invoke them in your javascript console.
+* No global state, you *could* create multiple completely independent loggers
+  and have mutliple overlays. For instance if somebody wanted to have one
+  browser window to display the logs of the server and browser.
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
