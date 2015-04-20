@@ -373,6 +373,9 @@ powerful renderers to the log messages.
 You can always just attach exactly once rather complicated renderer instead of
 multiple small ones.
 
+Another strategy is to apply your custom fancy renderer to only a tab (as a
+`map` transducer) and leave the *normal* tabs render it normally.
+
 ## Listening for logs
 Every log is pushed on a `mult` channel (see core.async docs) which you can tap
 into. The channel is in `:log-pub-ch` of the `db` atom.
@@ -410,6 +413,14 @@ supervisord):
 * Improve performance by only rendering the subset of log messages that are seen
   for the current scrolling position.
 * Go through the `TODO:` items in `klang/core.cljs`
+
+## Ideas
+
+We can render some common data structures in an arbitrary way. If you have an
+idea, feel free to submit a pull request. We can always just leave it in the
+source for others to use (but not used by the default renderer).
+For instance: How to render large data structures? Popup? How to render
+structs?
 
 # Why "Klang"?
 Timbre, the de-facto clojure logging library has do with sound.
