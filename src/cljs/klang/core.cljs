@@ -174,7 +174,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Declares
 (declare action!)
-
+(declare valid-log?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defn ensure-uuid
@@ -207,8 +207,7 @@
 (defn render-msg
   "Renders a single log message."
   [lg-ev]
-  ;;(log-console "render-msg")
-  ^{:key (:uuid lg-ev)} ;; Performance?
+  {:pre [(valid-log? lg-ev)]}
   [:li {:style {:list-style-type "none"}}
    ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
    ;; TODO: Refactor into a let-fn and func calls
@@ -229,7 +228,7 @@
    ;; console
    [:span
     {:style {:cursor "pointer"}
-     ;; Not sure how many browsers allow this shortcut (console.dir)
+     ;; When clicking on a log message we dump it to the console:
      :on-click (fn[_]
                  (do 
                    (js/console.group
@@ -247,9 +246,9 @@
       (str (:msg lg-ev)))]])
 
 (defn render-logs
+  "Renders an array of log messages."
   [logs]
-  {:pre [#_(log-console "expensive render called")
-         (sequential? logs)]}
+  {:pre [(sequential? logs)]}
   [:ul {:style {:padding ".5em"
                 :margin "0em"
                 :line-height "1.06em"}}
@@ -265,12 +264,13 @@
                          tab "white"
                          "grey")
                 :cursor "pointer"}
-        :on-click (fn[e] (action! db :switch-tab tab))}
+        :on-click (fn[_] (action! db :switch-tab tab))}
    (str tab)
    ;; Also display the current search term for the tab as a subscript:
    [:sub (str "/" (get-in @db [:tabs tab :search] ""))]])
 
 (defn render-overlay
+  "Renders the entire log message overlay in a div when :showing is true."
   [db]
   (when (:showing @db)
     [:div {:style (:div-outer css)}
@@ -321,8 +321,6 @@
                             ;; to capture it here
                             {:tab (:showing-tab @db)
                              :y (.. % -target -scrollTop)})}
-      ;; First filter the elements for the current tab:
-      ;; TODO: This is run every time if we scroll. Optimize.
       [render-logs (get-in @db [:tabs (:showing-tab @db) :logs])]
       ]]))
 
@@ -343,8 +341,7 @@
        (log-console "DOM element for klang created")
        newdom))))
 
-;; Ensures there is a link element in the head that injects the css for
-;; highlight.js
+;; Taken from highlight-js
 (defonce css-molokai ".hljs {
   display: block;
   overflow-x: auto;
@@ -397,7 +394,9 @@
   color: #75715e;
 }")
 
-(def inject-highlightjs-css (delay (gstyle/installStyles css-molokai)))
+;; Deref this to inject the CSS
+(def inject-highlightjs-css
+  (delay (gstyle/installStyles css-molokai)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Log message data manip
@@ -457,7 +456,7 @@
           ;; Put the log event into the db
           (action! db :new-log
                    (log+rules
-                    ;; TODO: Use transduce here instead
+                    ;; TODO: apply the transducer in a channel?
                     db (single-transduce transd v))))
         (recur (and (= ch freeze-ch) v))))))
 
@@ -759,7 +758,7 @@
     (log-console "Klang: Keyboard shortcut installed.")))
 
 (defn uninstall-shortcut!
-  ""
+  "Uninstalls a shortcut create by klang."
   [db]
   (.unregisterShortcut (:shortcut-handler @db) (:shortcut-keys @db)))
 
@@ -784,8 +783,7 @@
   "Returns a string containing HTML that highlights the message. Takes a string
   of clojure syntax. Such as map, set etc.
   Ex:
-  (hl-clj-str \"{:foo :bar}\")
-  "
+  (hl-clj-str \"{:foo :bar}\")"
   [^String msg]
   (.-value ;; hljs returns an object and the HTML is in .value
    (.highlight js/hljs "clojure" msg true)))
