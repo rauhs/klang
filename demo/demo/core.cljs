@@ -64,7 +64,7 @@
   (k/init-single-mode!) ;; Sets *db*
   (k/init!)
   (k/default-config!)
-  ;;(k/show!)
+  (k/show!)
   (ex-log-data))
 
 
@@ -91,6 +91,8 @@
 (r/render [demo-ui gen] js/document.body)
 
 (demo!)
+
+
 
 ;;(macros/init-debug-prod!)
 ;;(macros/init-dev!)

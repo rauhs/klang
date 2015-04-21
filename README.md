@@ -417,7 +417,7 @@ supervisord):
 * `:WARN`
 * `:ERRO`
 * `:CRIT` -- critical
-* `:FATAL`
+* `:FATA` -- fatal
 
 # TODO
 

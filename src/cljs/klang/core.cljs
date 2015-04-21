@@ -12,7 +12,8 @@
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
    ;; Google Closure
-   [goog.dom :as dom])
+   [goog.dom :as dom]
+   [goog.style :as gstyle])
   (:import 
    [goog.ui KeyboardShortcutHandler]))
 
@@ -232,15 +233,15 @@
      :on-click (fn[_]
                  (do 
                    (js/console.group
-                    "%s/%s -- %s" (:ns lg-ev)
+                    "%s%s%s -- %s"
+                    (:ns lg-ev)
+                    (if (empty? (:ns lg-ev)) "" "/")
                     (name (:type lg-ev))
                     (tf/unparse (:hour-minute-second-ms tf/formatters)
                                 (:time lg-ev)))
-                   ;;(mapv #(js/console.log "%O" %) (:msg lg-ev))
+                   ;; console.dir firefox & chrome only?
                    (mapv #(js/console.dir %) (:msg lg-ev))
-
-                   (js/console.groupEnd)
-                   ))}
+                   (js/console.groupEnd)))}
     (if-let [rndr (get-in lg-ev [:render :msg])]
       [(apply comp rndr) (:msg lg-ev)]
       (str (:msg lg-ev)))]])
@@ -310,8 +311,9 @@
         (if (:frozen @db) "Thaw" "Freeze")]]
       ]
      ;;;;;;;;;; The main logs ;;;;;;;;;
-     [:div.klang-logs
+     [:div#KLANG_LOG_DIV.klang-logs
       {:style (:div-logs css)
+       :id "KLANG_LOG_DIV"
        ;; Save scrolling position
        :on-scroll #(action! db ::scroll
                             ;; By the time we handle the action we might
@@ -323,6 +325,9 @@
       ;; TODO: This is run every time if we scroll. Optimize.
       [render-logs (get-in @db [:tabs (:showing-tab @db) :logs])]
       ]]))
+
+;; TODO:
+;;(js/console.dir (gstyle/getSize (dom/getElement "KLANG_LOG_DIV")))
 
 (defn get-dom-el
   "Ensures there is a div element in the body that we can render to and returns
@@ -340,120 +345,59 @@
 
 ;; Ensures there is a link element in the head that injects the css for
 ;; highlight.js
-(defonce css-molokai 
-".hljs {
+(defonce css-molokai ".hljs {
   display: block;
   overflow-x: auto;
   padding: 0.2em;
   background: #23241f;
   -webkit-text-size-adjust: none;
 }
-.hljs,
-.hljs-tag,
-.css .hljs-rule,
-.css .hljs-value,
-.css .hljs-function
-.hljs-preprocessor,
+.hljs,.hljs-tag,.css .hljs-rule,.css .hljs-value,.css .hljs-function .hljs-preprocessor,
 .hljs-pragma {
   color: #f8f8f2;
 }
-.hljs-strongemphasis,
-.hljs-strong,
-.hljs-emphasis {
+.hljs-strongemphasis,.hljs-strong,.hljs-emphasis {
   color: #a8a8a2;
 }
-.hljs-bullet,
-.hljs-blockquote,
-.hljs-horizontal_rule,
-.hljs-number,
-.hljs-regexp,
-.alias .hljs-keyword,
-.hljs-literal,
-.hljs-hexcolor {
+.hljs-bullet,.hljs-blockquote,.hljs-horizontal_rule,.hljs-number,.hljs-regexp,
+.alias .hljs-keyword,.hljs-literal,.hljs-hexcolor {
   color: #ae81ff;
 }
-.hljs-tag .hljs-value,
-.hljs-code,
-.hljs-title,
-.css .hljs-class,
+.hljs-tag .hljs-value,.hljs-code,.hljs-title,.css .hljs-class,
 .hljs-class .hljs-title:last-child {
   color: #a6e22e;
 }
 .hljs-link_url {
   font-size: 80%;
 }
-.hljs-strong,
-.hljs-strongemphasis {
+.hljs-strong,.hljs-strongemphasis {
   font-weight: bold;
 }
-.hljs-emphasis,
-.hljs-strongemphasis,
-.hljs-class .hljs-title:last-child,
-.hljs-typename {
+.hljs-emphasis,.hljs-strongemphasis,.hljs-class .hljs-title:last-child,.hljs-typename {
   font-style: italic;
 }
-.hljs-keyword,
-.hljs-function,
-.hljs-change,
-.hljs-winutils,
-.hljs-flow,
-.hljs-header,
-.hljs-attribute,
-.hljs-symbol,
-.hljs-symbol .hljs-string,
-.hljs-tag .hljs-title,
-.hljs-value,
-.alias .hljs-keyword:first-child,
-.css .hljs-tag,
-.css .unit,
-.css .hljs-important {
+.hljs-keyword,.hljs-function,.hljs-change,.hljs-winutils,.hljs-flow,.hljs-header,.hljs-attribute,
+.hljs-symbol,.hljs-symbol .hljs-string,.hljs-tag .hljs-title,.hljs-value,.alias .hljs-keyword:first-child,
+.css .hljs-tag,.css .unit,.css .hljs-important {
   color: #f92672;
 }
-.hljs-function .hljs-keyword,
-.hljs-class .hljs-keyword:first-child,
-.hljs-aspect .hljs-keyword:first-child,
-.hljs-constant,
-.hljs-typename,
-.hljs-name,
-.css .hljs-attribute {
+.hljs-function .hljs-keyword,.hljs-class .hljs-keyword:first-child,.hljs-aspect .hljs-keyword:first-child,
+.hljs-constant,.hljs-typename,.hljs-name,.css .hljs-attribute {
   color: #66d9ef;
 }
-.hljs-variable,
-.hljs-params,
-.hljs-class .hljs-title,
-.hljs-aspect .hljs-title {
+.hljs-variable,.hljs-params,.hljs-class .hljs-title,.hljs-aspect .hljs-title {
   color: #f8f8f2;
 }
-.hljs-string,
-.hljs-subst,
-.hljs-type,
-.hljs-built_in,
-.hljs-attr_selector,
-.hljs-pseudo,
-.hljs-addition,
-.hljs-stream,
-.hljs-envvar,
-.hljs-prompt,
-.hljs-link_label,
-.hljs-link_url {
+.hljs-string,.hljs-subst,.hljs-type,.hljs-built_in,.hljs-attr_selector,.hljs-pseudo,.hljs-addition,
+.hljs-stream,.hljs-envvar,.hljs-prompt,.hljs-link_label,.hljs-link_url {
   color: #e6db74;
 }
-.hljs-comment,
-.hljs-javadoc,
-.hljs-annotation,
-.hljs-decorator,
-.hljs-pi,
-.hljs-doctype,
-.hljs-deletion,
+.hljs-comment,.hljs-javadoc,.hljs-annotation,.hljs-decorator,.hljs-pi,.hljs-doctype,.hljs-deletion,
 .hljs-shebang {
   color: #75715e;
 }")
 
-(def inject-highlightjs-css
-  (delay 
-   (let [styleel (dom/createDom "style")] 
-     (set! (.. styleel -innerHTML) css-molokai)
-     (dom/appendChild js/document.head styleel))))
+(def inject-highlightjs-css (delay (gstyle/installStyles css-molokai)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Log message data manip
@@ -958,12 +902,13 @@
 
 ;; http://www.w3schools.com/cssref/css_colornames.asp
 (defn color-types! [db]
-  (type->color! db :TRAC "lightblue")
+  ;;(type->color! db :TRAC "lightblue")
   (type->color! db :DEBG "gray")
+  (type->color! db :TRAC "darkgray")
   (type->color! db :INFO "steelblue")
-  (type->color! db :ERRO "red")
-  (type->color! db :CRIT "darkred")
-  (type->color! db :FATAL "firebrick")
+  (type->color! db :ERRO "darkred")
+  (type->color! db :CRIT "red")
+  (type->color! db :FATA "firebrick")
   (type->color! db :WARN "orange"))
 
 (defn default-config!
