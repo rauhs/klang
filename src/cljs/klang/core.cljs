@@ -90,6 +90,12 @@
    ;; If we freeze we won't pull from the mult channel and buffer instead
    ;; Before they get into this array they will be transduced!
    :logs []
+   ;; Stuff for rendering part of the log messages depending on the scrolling
+   ;; position
+   ;; sp == scrolling position
+   :sp-start 0
+   ;; The uuid of the top element
+   :sp-uuid ""
    })
 
 
@@ -311,16 +317,17 @@
         (if (:frozen @db) "Thaw" "Freeze")]]
       ]
      ;;;;;;;;;; The main logs ;;;;;;;;;
-     [:div#KLANG_LOG_DIV.klang-logs
+     [:div.klang-logs
       {:style (:div-logs css)
        :id "KLANG_LOG_DIV"
        ;; Save scrolling position
-       :on-scroll #(action! db ::scroll
-                            ;; By the time we handle the action we might
-                            ;; have a different showing tab so we need
-                            ;; to capture it here
-                            {:tab (:showing-tab @db)
-                             :y (.. % -target -scrollTop)})}
+       :on-scroll (fn[ev] (action!
+                           db ::scroll
+                           ;; By the time we handle the action we might
+                           ;; have a different showing tab so we need
+                           ;; to capture it here
+                           {:tab (:showing-tab @db)
+                            :y (.. ev -target -scrollTop)}))}
       [render-logs (get-in @db [:tabs (:showing-tab @db) :logs])]
       ]]))
 
@@ -789,7 +796,7 @@
    (.highlight js/hljs "clojure" msg true)))
 
 (defn msg->str
-  "Converts a message to a string. Also ensures the data is "
+  "Converts a message to a string. Also calls js->clj."
   [msg]
   (as-> (str (js->clj msg)) s
     (.substr s 1 (- (.-length s) 2))))
