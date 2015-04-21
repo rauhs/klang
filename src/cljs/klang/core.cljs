@@ -70,7 +70,7 @@
    ;; The current tab
    :showing-tab :all
    ;; User defined tabs state
-   :tabs {
+   :tabs (sorted-map
           ;; The main tab holding all logs
           :all {:transducers [identity] ;; basically the filter
                 ;; The full text search box content
@@ -78,7 +78,7 @@
                 :search ""
                 :logs [] ;; The logs for this tab
                 :scroll-top 0} ;; The scroll position
-          }
+          )
    ;; The transducers that add data to the logs. For instance by adding
    ;; render function which change the color
    :transducers {}
