@@ -15,21 +15,21 @@ clojure data structures:
 * Define multiple tabs that filter only the messages that you're interested in
   with transducers (allows things like: "wait for event X, then show the next
   10 events")
-* Zero overhead and removal of all log function calls for production by eliding
-  all calls with macros. No Klang code goes into your app.
+* **Zero overhead and removal of all log function calls for production by eliding
+  all calls with macros. No Klang code goes into your app.**
 * Enter a search term to quickly find log messages
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
-* Clone existing tabs to quickly apply different search terms.
-* Customize rendering of any log data (attach render function to any log
+* **Customize rendering** of any log data (attach render function to any log
   message that emits hiccup)
-* Log is asynchronous so you don't have to worry about blocking.
+* Clone existing tabs to quickly apply different search terms
+* Logging is asynchronous so you don't have to worry about blocking
 * Click on any log message and dump the object to your javascript console (as an
   object). This allows you to inspect the object and even log functions and
   invoke them in your javascript console. See the demo.
 * No global state, you *could* create multiple completely independent loggers
   and have mutliple overlays. For instance if somebody wanted to have one
-  browser window to display the logs of the server and browser.
+  browser window to display the logs of the server and browser
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
