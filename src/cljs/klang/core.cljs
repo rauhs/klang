@@ -35,6 +35,7 @@
 ;; filter only that ns
 ;; TODO:
 ;; Remove cljs-time dependency. I don't really use the functionality
+;; Debounce the searching transducer
 
 ;; If anything goes wrong in register-transducer and the render functions
 ;; figwheel goes a little crazy and we need to reload the page!
