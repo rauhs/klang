@@ -92,6 +92,8 @@
 (demo!)
 
 
+(log! ::TRAC :may-wanna-click "on on this message" js/document.head)
+
 
 ;;(macros/init-debug-prod!)
 ;;(macros/init-dev!)
