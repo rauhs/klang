@@ -48,7 +48,7 @@
 
 (defonce
   ^{:doc "Holds a global instance of a db in case we want to use this
- library in single user mode. Ie only one loggins system. Will be true for 99%
+ library in single user mode. Ie only one logging system. Will be true for 99%
  of all users."}
   *db* (atom {}))
 
@@ -284,6 +284,8 @@
 ;; Given: n, VH, scroll position and thus the ratio of T/B
 ;; Not known: OH, p, q, k, T, B
 ;; :((, so much estimation
+;; Actually: We render a fixed with font, so we should know very well what the
+;; size is
 
 ;; Log message size:
 ;; Q: What if we pre-render a log message when it arrives do we then
