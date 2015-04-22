@@ -72,9 +72,9 @@
                             :output-dir    "resources/public/cljs/demo/out"
                             :asset-path   "js/out"
                             :output-wrapper false
-                            :pseudo-names true
-                            :optimizations :advanced
-                            :pretty-print  true}}
+                            :pseudo-names false
+                            :optimizations :simple
+                            :pretty-print  false}}
     :prod {:source-paths ["src/cljs"]
            :compiler {:output-to     "resources/public/cljs/production/app.js"
                       :output-dir    "resources/public/cljs/production/out"

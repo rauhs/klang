@@ -1,3 +1,4 @@
+.PHONY: demo
 
 # Seems to not work:
 CLJS=~/.m2/repository/org/clojure/clojurescript/0.0-3169/clojurescript-0.0-3169.jar
@@ -17,12 +18,10 @@ clean :
 
 print-%: ; @echo $*=$($*)
 
-.PHONY: demo
-demo: demo.html
 
-demo.html :
-	echo "<html><head></head>" > $@
-	echo "<body><script>" >> $@
-	cat ./resources/public/cljs/demo/app.js >> $@
-	echo "</script></body></html>" >> $@
+demo :
+	echo "<html><head></head>" > demo.html
+	echo "<body><script>" >> demo.html
+	cat ./resources/public/cljs/demo/app.js >> demo.html
+	echo "</script></body></html>" >> demo.html
 

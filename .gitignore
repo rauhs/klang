@@ -3,6 +3,7 @@
 **.jar
 **.class
 **.#**
+demo.html
 .nrepl-history
 pom.xml
 pom.xml.asc
