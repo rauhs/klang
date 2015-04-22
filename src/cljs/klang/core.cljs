@@ -7,6 +7,7 @@
    [reagent.core :as r :refer [atom]]
    [cljs-time.core :as t]
    [cljs-time.format :as tf]
+   [clojure.string :as string]
    [cljsjs.highlight]
    [cljsjs.highlight.langs.clojure]
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
@@ -474,12 +475,11 @@
   Does a full text search on time, namespace, level and message.
   The format is like:
   11:28:27.793 my.ns/INFO [\"Log msg 0\"]"
-  ;; TODO: Fuzzy sear
   ([db] (search-transducer db (:showing-tab @db)))
   ([db tab]
    (filter (fn[lg-ev]
-             ;; Todo: let some?
              (let [search (get-in @db [:tabs tab :search] "")
+                   search (string/replace search " " ".*")
                    re    (try (js/RegExp. search "i")
                               (catch :default e (js/RegExp "")))
                    log-str (str
