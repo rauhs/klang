@@ -10,13 +10,6 @@
    [klang.core :refer [tab->type!  tab->ns!  tab->ns*!  *db* logger
                        ns*->color!  ns->color!  log!  raw-log!] :as k]))
 
-(def gen-logs
-  (delay
-   (go-loop [i 0]
-     (<! (timeout 100))
-     (log! ::INFO {:gen i})
-     (recur (+ i 1)))))
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; For development
 (defn ex-log-data []
@@ -68,9 +61,15 @@
   (ex-log-data))
 
 
-;; Deref to generate logs
+(def gen-logs
+  (delay
+   (go-loop [i 0]
+     (<! (timeout 10))
+     (log! ::INFO {:gen i})
+     (recur (+ i 1)))))
 
-;; TODO: Create a demo UI to allow switching sources on-off
+
+;; Deref to generate logs
 ;; @gen-logs
 
 (defonce gen (r/atom false))

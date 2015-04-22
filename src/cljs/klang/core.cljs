@@ -77,7 +77,8 @@
                 ;; The full text search box content
                 ;; Don't nil this
                 :search ""
-                :logs [] ;; The logs for this tab
+                ;; Should this be a list or vector?
+                :logs [] ;; The logs for this tab,
                 :scroll-top 0} ;; The scroll position
           )
    ;; The transducers that add data to the logs. For instance by adding
@@ -90,13 +91,15 @@
    ;; The actual logs that we render, continuously updated unless frozen.
    ;; If we freeze we won't pull from the mult channel and buffer instead
    ;; Before they get into this array they will be transduced!
-   :logs []
+   :logs [] ;; List or vector?
    ;; Stuff for rendering part of the log messages depending on the scrolling
    ;; position
    ;; sp == scrolling position
-   :sp-start 0
-   ;; The uuid of the top element
-   :sp-uuid ""
+   ;; How many logs to skip (since we're somewhere scrolled down)
+   :sp-skip 0
+   ;; How many logs to actually render each time.
+   ;; For my laptop: ~1sec render time per 100 elements :(
+   :sp-take 100
    })
 
 
@@ -211,6 +214,7 @@
 
 ;; Renders a line:
 ;; TIME NS/LEVEL Msg
+;; TODO: We can also pre-render an element when it arrives.
 (defn render-msg
   "Renders a single log message."
   [lg-ev]
@@ -252,6 +256,42 @@
       [(apply comp rndr) (:msg lg-ev)]
       (str (:msg lg-ev)))]])
 
+;; For rendering only the parts we see in a list: we have to know OR
+;; estimate:
+;; NUMBERS:
+;; * Total #el: n -- easy
+;; * #el visible in the div. -- harder, needs to be estimated due to
+;;   multi line logs. Def changes over time since we might start with
+;;   a lot of multi line logs and also the js console will open and
+;;   resize it. So re-calc continuously: k
+;; Given a scroll position:
+;; * How many elem above: p
+;; * How many elem below: q
+;; p + q + k = n ;; known: n, estimated: choose 2 of p,q,k :(
+;; 
+;; DIMENSIONS:
+;; are all estimated b/c we don't know the size of a log message:
+;; * Total height of the (inner) div as it would have if we put all
+;;   log message in there
+;; * Space below/above scroll position.
+;; * Actual height we can use to show logs: Given by the user: H
+;;
+;; Some math:
+;; - p, q, k, n ~~ T, B, VH, OH
+;; Given: n, VH, scroll position and thus the ratio of T/B
+;; Not known: OH, p, q, k, T, B
+;; :((, so much estimation
+
+;; Log message size:
+;; Q: What if we pre-render a log message when it arrives do we then
+;; know the exact size? Not really, since we might have a different
+;; div width when the user displays the overlay.
+;; But we could pre-calc it and then set a dirty flag or re-calc on
+;; resize.
+
+;; This we can get with JS:
+;; * getClientRect
+
 (defn render-logs
   "Renders an array of log messages."
   [logs]
@@ -260,7 +300,7 @@
                 :margin "0em"
                 :line-height "1.06em"}}
    ;; Create the rendered log message
-   (for [lg logs]
+   (for [lg logs #_(take 30 logs)]
      ^{:key (:uuid lg)} [render-msg lg])])
 
 (defn render-tab-item
