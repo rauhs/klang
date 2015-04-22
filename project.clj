@@ -31,8 +31,8 @@
   ;; to duplication for multiple dependencies with the same excluded libraries.
   :exclusions [org.clojure/tools.nrepl]
 
-  :ring {:handler klang.handler/app
-         :uberwar-name "klang.war"}
+  ;;:ring {:handler klang.handler/app
+         ;;:uberwar-name "klang.war"}
 
   :min-lein-version "2.5.0"
 
@@ -135,12 +135,13 @@
     :injections [(require 'pjstadig.humane-test-output)
                  (pjstadig.humane-test-output/activate!)]
 
-    :figwheel {:http-server-root "public"
+    :figwheel {:http-server-root "public" ;; But really resources/public
                ;;:nrepl-port 7888 ;; Not working
                ;;:repl false
                :server-port 3449
                :css-dirs ["resources/public/css"]
-               :ring-handler klang.handler/app}
+               ;;:ring-handler klang.handler/app
+               }
 
     :env {:dev? true}
 
