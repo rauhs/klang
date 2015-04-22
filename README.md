@@ -9,6 +9,9 @@ clojure data structures:
 
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
 
+
+[Demo][].
+
 # Features
 
 * Central hub to push all log messages in your client app
@@ -466,3 +469,5 @@ Copyright &copy; 2015 Andre Rauh. Distributed under the
 
 
 [Eclipse Public License]: <https://raw2.github.com/rauhs/klang/master/LICENSE>
+[Demo]: <http://rauhs.github.io/klang/>
+
