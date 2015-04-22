@@ -56,7 +56,7 @@ Warning: I've never deployed to clojars.
 
 The following is the simplest usage:
 ```clj
-(ns your.ns
+(ns your.app.somens
   (:require [klang.core :as k]))
 
 ;; We could potentially use multiple independent loggers. Single mode
@@ -67,21 +67,23 @@ The following is the simplest usage:
 (k/default-config!)
 
 ;; Define a logger that always logs as ::INFO
-(def lg
-  (k/logger ::INFO))
+;; Note how we abuse namespaced keywords here to get more detailed logging
+;; information than just :INFO
+(def lg (k/logger ::INFO))
 
 ;; Now call the ::INFO logger with whatever parameters you like
 (lg :db-init "Db initiaized" 'another-arbitrary-param)
 (lg :validation :ok {:user userid})
+;; A timestamp will be automatically added.
 
 ;; Or without the indirection of k/logger:
-(k/log! ::INFO "User logged in")
+(k/log! ::WARN "User failed to in")
 
 ;; Or the low level raw log:
 ;; Can be useful if we get log message externally from a server.
 (k/raw-log! {:time (goog.date.DateTime.)
              :type :INFO
-             :ns "whatever.ns.you.like"
+             :ns "whatever.ns.you.like" ;; Doesn't have to exist
              :msg [:one :two "foo"]})
 
 ;; Show the logs in an div overlay:
@@ -107,6 +109,9 @@ The following is the simplest usage:
 There is nothing special about `::INFO`, you can use any arbitrary keyword.
 The `default-config!` sets up some default color rendering and also
 registers the keyboard shortcut `l` to view/hide the logs.
+See the source code of `default-config!`, it only calls a handful of functions.
+If you want to change --for instance-- the key shortcut you can just grab the
+code and change it.
 
 There is also many ways you can customize the rendering yourself. See
 the section below for more details on this.
@@ -161,7 +166,7 @@ This is why I've chosen to give this recipe that only has a few lines
 of code and everybody can adapt it to their needs:
 
 ```clj
-;; file-name: your/project/logging.clj -- note: /Not/ cljs
+;; file-name: your/app/logging.clj -- note: /Not/ cljs
 ;; 
 ;; This requires Clojure 1.7 due to the use of transducers. But it can
 ;; be modified easily to use simple (predicate) functions.
@@ -262,6 +267,10 @@ of code and everybody can adapt it to their needs:
 ;; crashes and/or errors.
 ```
 
+I could not offer the same flexible functionality from the library itself since
+passing in transducers from clojurescript code to clojure macros is very
+awkward and I'd rather not make people deal with this.
+
 This is a long template. But I think it's better to not include this in Klang
 since it's more flexible if users set it up themself.
 
@@ -271,10 +280,10 @@ for it due to namespaced keywords.
 Then setup and call your logging like so:
 
 ```clj
-;; -- filename: my/app/setup.cljs
-(ns my.app.setup
+;; -- filename: your/app/setup.cljs
+(ns your.app.setup
   (:require-macros
-   [your.project.logging :refer [log! info! warn!] :as lgmacros]))
+   [your.app.logging :refer [log! info! warn!] :as lgmacros]))
 
 (lgmacros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
 
