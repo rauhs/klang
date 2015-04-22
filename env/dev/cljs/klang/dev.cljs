@@ -1,7 +1,7 @@
 (ns ^:figwheel-no-load
   klang.dev
   (:require [klang.core :as core]
-            [demo.core :as demo]
+            [klangdemo.core :as demo]
             [figwheel.client :as figwheel :include-macros true]
             [weasel.repl :as weasel]
             [reagent.core :as r]))
@@ -15,4 +15,4 @@
 
 (weasel/connect "ws://localhost:9001" :verbose true)
 
-(demo/init!)
+;;(demo/init!)

@@ -1,5 +1,5 @@
 (ns ^:figwheel-always
-  demo.core
+  klangdemo.core
   (:require-macros
    [klang.macros :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
