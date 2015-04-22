@@ -17,7 +17,8 @@ clojure data structures:
   10 events")
 * **Zero overhead and removal of all log function calls for production by eliding
   all calls with macros. No Klang code goes into your app.**
-* Enter a search term to quickly find log messages
+* Enter a search term to quickly find log messages (Spaces will map to `.*`, so
+  similar to Emacs fuzzy search)
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
 * **Customize rendering** of any log data (attach render function to any log
