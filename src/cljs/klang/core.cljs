@@ -36,6 +36,8 @@
 ;; TODO:
 ;; Remove cljs-time dependency. I don't really use the functionality
 ;; Debounce the searching transducer
+;; Add line# and filename as meta data when logging with macros.
+;; Display them only in the js console when clicking on data
 
 ;; If anything goes wrong in register-transducer and the render functions
 ;; figwheel goes a little crazy and we need to reload the page!
