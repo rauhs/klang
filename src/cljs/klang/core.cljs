@@ -253,7 +253,11 @@
                     (tf/unparse (:hour-minute-second-ms tf/formatters)
                                 (:time lg-ev)))
                    ;; console.dir firefox & chrome only?
-                   (mapv #(js/console.dir %) (:msg lg-ev))
+                   ;;(mapv #(js/console.dir %) (:msg lg-ev))
+                   ;; %o calls either .dir() or .dirxml() if it's a DOM node
+                   ;; This means we get a real string and a real DOM node into
+                   ;; our console. Probably better than always calling dir
+                   (mapv #(js/console.log "%o" %) (:msg lg-ev))
                    (js/console.groupEnd)))}
     (if-let [rndr (get-in lg-ev [:render :msg])]
       [(apply comp rndr) (:msg lg-ev)]
