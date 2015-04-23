@@ -52,6 +52,8 @@
  of all users."}
   *db* (atom {}))
 
+(declare time-formatter)
+
 ;; Config for display/tabs of the log viewer
 (defn new-db
   "Creates a new logger instance database."
@@ -75,8 +77,7 @@
    :showing-tab :all
    ;; Date time formatter
    ;; memfn not working?
-   :time-formatter (fn[time] (.format
-                              (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS") time))
+   :time-formatter time-formatter
    ;; User defined tabs state
    :tabs (sorted-map
           ;; The main tab holding all logs
@@ -188,6 +189,10 @@
                           (g) (repeatedly 3 f) "-"
                           (repeatedly 12 f)))))
 
+(defn time-formatter
+  [time]
+  (.format (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS") time))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Declares
 (declare action!)
@@ -254,9 +259,9 @@
                     (:ns lg-ev)
                     (if (empty? (:ns lg-ev)) "" "/")
                     (name (:type lg-ev))
-                    ((.format
-                      (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS"))
-                     (:time lg-ev)))
+                    ;; We can't dered DB here to get the formatter
+                    ;; or reagent will re-render everything always
+                    (time-formatter (:time lg-ev)))
                    ;; console.dir firefox & chrome only?
                    ;;(mapv #(js/console.dir %) (:msg lg-ev))
                    ;; %o calls either .dir() or .dirxml() if it's a DOM node
