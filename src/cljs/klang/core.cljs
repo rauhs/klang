@@ -87,7 +87,8 @@
                 :search ""
                 ;; Should this be a list or vector?
                 :logs [] ;; The logs for this tab,
-                :scroll-top 0} ;; The scroll position
+                ;; The scroll position: Pixels hidden on top
+                :scroll-top 0}
           )
    ;; The transducers that add data to the logs. For instance by adding
    ;; render function which change the color
@@ -299,7 +300,8 @@
 ;; Not known: OH, p, q, k, T, B
 ;; :((, so much estimation
 ;; Actually: We render a fixed with font, so we should know very well what the
-;; size is
+;; size is:
+;; * 
 
 ;; Log message size:
 ;; Q: What if we pre-render a log message when it arrives do we then
@@ -309,7 +311,14 @@
 ;; resize.
 
 ;; This we can get with JS:
-;; * getClientRect
+;; * getBoundingClientRect
+;; Returns the height/width of the div. Not taking in account the
+;; content (scrolling)
+;; * div.scrollHeight should be the absolute size if all elements were
+;;   rendered.
+;; * scrollTop: Pixels hidden on top
+;; * clientHeight: The current height of the div not taking content
+;;   into account
 
 (defn render-logs
   "Renders an array of log messages."
