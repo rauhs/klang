@@ -12,11 +12,11 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
-   [goog.date.DateTime :as gdate]
-   [goog.i18n.DateTimeFormat :as gdatef]
    [goog.style :as gstyle])
   (:import 
-   [goog.ui KeyboardShortcutHandler]))
+   goog.date.DateTime
+   goog.i18n.DateTimeFormat
+   goog.ui.KeyboardShortcutHandler))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
@@ -219,7 +219,7 @@
   [msg]
   (if (:time msg)
     msg
-    (assoc msg :time (gdate/fromTimestamp (goog.now)))))
+    (assoc msg :time (goog.date.DateTime.))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -772,7 +772,7 @@
   [db ns_type & msg]
   ;; Even though we could let the time be added later we do it right here to
   ;; have an accurate time
-  (raw-log! db {:time (gdate/fromTimestamp (goog.now))
+  (raw-log! db {:time (goog.date.DateTime.)
                 :type (keyword (name ns_type)) ;; name make ::FOO -> "FOO"
                 ;; (namespace :FOO) is nil, that's why we need (str) here
                 :ns (str (namespace ns_type))
@@ -1006,7 +1006,7 @@
   ;; Alias
   (def l log-console)
 
-  (js/console.dir (gdate/fromTimestamp (goog.now)))
+  (js/console.dir (goog.date.DateTime.))
 
   ;; :hour-minute-second-ms : 11:02:23.009
   ;; :time  : 11:01:56.611-04:00
