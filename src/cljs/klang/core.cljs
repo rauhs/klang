@@ -232,47 +232,50 @@
   "Renders a single log message."
   [lg-ev]
   {:pre [(valid-log? lg-ev)]}
-  [:li {:style {:list-style-type "none"}}
-   ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
-   ;; TODO: Refactor into a let-fn and func calls
-   (if-let [rndr (get-in lg-ev [:render :time])]
-     ;; Still need to compose all the given render functions here
-     [(apply comp rndr) (:time lg-ev)]
-     (str (:time lg-ev)))
-   " "
-   (if-let [rndr (get-in lg-ev [:render :ns])]
-     [(apply comp rndr) (:ns lg-ev)]
-     (:ns lg-ev))
-   (when-not (empty? (:ns lg-ev)) "/")
-   (if-let [rndr (get-in lg-ev [:render :type])]
-     [(apply comp rndr) (:type lg-ev)]
-     (name (:type lg-ev)))
-   " "
-   ;; Wrap the message in a span to allow clicking it and logging it to the
-   ;; console
-   [:span
-    {:style {:cursor "pointer"}
-     ;; When clicking on a log message we dump it to the console:
-     :on-click (fn[_]
-                 (do 
-                   (js/console.group
-                    "%s%s%s -- %s"
-                    (:ns lg-ev)
-                    (if (empty? (:ns lg-ev)) "" "/")
-                    (name (:type lg-ev))
-                    ;; We can't dered DB here to get the formatter
-                    ;; or reagent will re-render everything always
-                    (time-formatter (:time lg-ev)))
-                   ;; console.dir firefox & chrome only?
-                   ;;(mapv #(js/console.dir %) (:msg lg-ev))
-                   ;; %o calls either .dir() or .dirxml() if it's a DOM node
-                   ;; This means we get a real string and a real DOM node into
-                   ;; our console. Probably better than always calling dir
-                   (mapv #(js/console.log "%o" %) (:msg lg-ev))
-                   (js/console.groupEnd)))}
-    (if-let [rndr (get-in lg-ev [:render :msg])]
-      [(apply comp rndr) (:msg lg-ev)]
-      (str (:msg lg-ev)))]])
+  ;; Caching only improves rendering by like 10% :(
+  (if-let [cached (::cached-render lg-ev)]
+    cached
+    [:li {:style {:list-style-type "none"}}
+     ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
+     ;; TODO: Refactor into a let-fn and func calls
+     (if-let [rndr (get-in lg-ev [:render :time])]
+       ;; Still need to compose all the given render functions here
+       [(apply comp rndr) (:time lg-ev)]
+       (str (:time lg-ev)))
+     " "
+     (if-let [rndr (get-in lg-ev [:render :ns])]
+       [(apply comp rndr) (:ns lg-ev)]
+       (:ns lg-ev))
+     (when-not (empty? (:ns lg-ev)) "/")
+     (if-let [rndr (get-in lg-ev [:render :type])]
+       [(apply comp rndr) (:type lg-ev)]
+       (name (:type lg-ev)))
+     " "
+     ;; Wrap the message in a span to allow clicking it and logging it to the
+     ;; console
+     [:span
+      {:style {:cursor "pointer"}
+       ;; When clicking on a log message we dump it to the console:
+       :on-click (fn[_]
+                   (do 
+                     (js/console.group
+                      "%s%s%s -- %s"
+                      (:ns lg-ev)
+                      (if (empty? (:ns lg-ev)) "" "/")
+                      (name (:type lg-ev))
+                      ;; We can't dered DB here to get the formatter
+                      ;; or reagent will re-render everything always
+                      (time-formatter (:time lg-ev)))
+                     ;; console.dir firefox & chrome only?
+                     ;;(mapv #(js/console.dir %) (:msg lg-ev))
+                     ;; %o calls either .dir() or .dirxml() if it's a DOM node
+                     ;; This means we get a real string and a real DOM node into
+                     ;; our console. Probably better than always calling dir
+                     (mapv #(js/console.log "%o" %) (:msg lg-ev))
+                     (js/console.groupEnd)))}
+      (if-let [rndr (get-in lg-ev [:render :msg])]
+        [(apply comp rndr) (:msg lg-ev)]
+        (str (:msg lg-ev)))]]))
 
 ;; For rendering only the parts we see in a list: we have to know OR
 ;; estimate:
@@ -642,19 +645,20 @@
 (defmethod handle-action :new-log
   [db {:keys [data]}]
   {:pre [(valid-log? data)]}
-  ;; First put it in the global log message vector:
-  (swap! db update-in [:logs] #(cons data %))
-  ;; Then also put it into all tabs :logs vectors
-  (doseq [tab (keys (:tabs @db))]
-    (let [td (apply comp
-                    (search-transducer db tab)
-                    (get-in @db [:tabs tab :transducers]))
-          ;; A hack: Run a transducer on a single element and pick out the elem
-          data-td (single-transduce td data)
-          kork [:tabs tab :logs]]
-      ;; Don't swap if it's empty. Doh
-      (when-not (empty? data-td) 
-        (swap! db update-in kork #(cons data-td %))))))
+  (let [data (assoc data ::cached-render (render-msg data))]
+    ;; First put it in the global log message vector:
+    (swap! db update-in [:logs] #(cons data %))
+    ;; Then also put it into all tabs :logs vectors
+    (doseq [tab (keys (:tabs @db))]
+      (let [td (apply comp
+                      (search-transducer db tab)
+                      (get-in @db [:tabs tab :transducers]))
+            ;; A hack: Run a transducer on a single element and pick out the elem
+            data-td (single-transduce td data)
+            kork [:tabs tab :logs]]
+        ;; Don't swap if it's empty. Doh
+        (when-not (empty? data-td) 
+          (swap! db update-in kork #(cons data-td %)))))))
 
 ;; Invalidades the cached log vector in a certain tab. This is needed when the
 ;; search term is changed or new tab-transduceres were added
