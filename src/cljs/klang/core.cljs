@@ -5,8 +5,6 @@
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]
-   [cljs-time.core :as t]
-   [cljs-time.format :as tf]
    [clojure.string :as string]
    [cljsjs.highlight]
    [cljsjs.highlight.langs.clojure]
@@ -14,6 +12,8 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
+   [goog.date.DateTime :as gdate]
+   [goog.i18n.DateTimeFormat :as gdatef]
    [goog.style :as gstyle])
   (:import 
    [goog.ui KeyboardShortcutHandler]))
@@ -73,6 +73,10 @@
    :freeze-buffer 1000
    ;; The current tab
    :showing-tab :all
+   ;; Date time formatter
+   ;; memfn not working?
+   :time-formatter (fn[time] (.format
+                              (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS") time))
    ;; User defined tabs state
    :tabs (sorted-map
           ;; The main tab holding all logs
@@ -209,7 +213,7 @@
   [msg]
   (if (:time msg)
     msg
-    (assoc msg :time (t/time-now))))
+    (assoc msg :time (gdate/fromTimestamp (goog.now)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -250,8 +254,9 @@
                     (:ns lg-ev)
                     (if (empty? (:ns lg-ev)) "" "/")
                     (name (:type lg-ev))
-                    (tf/unparse (:hour-minute-second-ms tf/formatters)
-                                (:time lg-ev)))
+                    ((.format
+                      (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS"))
+                     (:time lg-ev)))
                    ;; console.dir firefox & chrome only?
                    ;;(mapv #(js/console.dir %) (:msg lg-ev))
                    ;; %o calls either .dir() or .dirxml() if it's a DOM node
@@ -532,9 +537,7 @@
                    re    (try (js/RegExp. search "i")
                               (catch :default e (js/RegExp "")))
                    log-str (str
-                            (tf/unparse
-                             (:hour-minute-second-ms tf/formatters)
-                             (:time lg-ev))
+                            ((:time-formatter @db) (:time lg-ev))
                             " "
                             (:ns lg-ev)
                             (when-not (empty? (:ns lg-ev)) "/")
@@ -751,7 +754,7 @@
   [db ns_type & msg]
   ;; Even though we could let the time be added later we do it right here to
   ;; have an accurate time
-  (raw-log! db {:time (t/time-now)
+  (raw-log! db {:time (gdate/fromTimestamp (goog.now))
                 :type (keyword (name ns_type)) ;; name make ::FOO -> "FOO"
                 ;; (namespace :FOO) is nil, that's why we need (str) here
                 :ns (str (namespace ns_type))
@@ -833,7 +836,7 @@
        x [:render :time] conj
        (fn [m]
          [:span
-          (tf/unparse (:hour-minute-second-ms tf/formatters) m)]))))))
+          ((:time-formatter @db) m)]))))))
 
 (defn hl-clj-str
   "Returns a string containing HTML that highlights the message. Takes a string
@@ -985,11 +988,10 @@
   ;; Alias
   (def l log-console)
 
+  (js/console.dir (gdate/fromTimestamp (goog.now)))
+
   ;; :hour-minute-second-ms : 11:02:23.009
   ;; :time  : 11:01:56.611-04:00
-  (l (tf/unparse (:hour-minute-second-ms tf/formatters) (t/time-now) ))
-
-  (l (tf/unparse :time (t/time-now) ))
   
   (l  (filter #(:fo %)))
 
