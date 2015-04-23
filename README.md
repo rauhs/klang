@@ -444,6 +444,9 @@ supervisord):
 * Go through the `TODO:` items in `klang/core.cljs`
 * We should probably cut off ridicioulsy long messages and just allow the user
   to click on it to dump the object to the console.
+* We should dump all meta information of the log message when user clicks on it.
+  But not display it in the UI. This would allow for compact yet rich messages.
+  Macros should attach line number and filename to the meta ifno.
 
 ## Ideas
 
