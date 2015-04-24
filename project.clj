@@ -72,6 +72,7 @@
                             :output-dir    "resources/public/cljs/demo/out"
                             :asset-path   "js/out"
                             :output-wrapper false
+                            ;;:static-fns true
                             :pseudo-names false
                             :optimizations :simple
                             :pretty-print  false}}
@@ -80,6 +81,7 @@
                       :output-dir    "resources/public/cljs/production/out"
                       :asset-path   "js/out"
                       :output-wrapper false
+                      :static-fns true ;; should be true by default
                       :optimizations :advanced
                       :pretty-print  false}}}}
   :profiles
