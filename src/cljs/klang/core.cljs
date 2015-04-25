@@ -12,11 +12,12 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
-   [goog.date.DateTime :as gdate]
-   [goog.i18n.DateTimeFormat :as gdatef]
+   [goog.string :as gstring]
    [goog.style :as gstyle])
   (:import 
-   [goog.ui KeyboardShortcutHandler]))
+   goog.date.DateTime
+   goog.i18n.DateTimeFormat
+   goog.ui.KeyboardShortcutHandler))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Doc:
@@ -175,20 +176,7 @@
   (or (= c p) 
       (parent? p c)))
 
-;; TODO: Just use a simple counter instead
-;; OR use goog.string.getRandomString
-(defn make-random-uuid
-  " Returns pseudo randomly generated UUID,
-  like: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  []
-  (letfn [(f [] (.toString (rand-int 16) 16))
-          (g [] (.toString  (bit-or 0x8 (bit-and 0x3 (rand-int 15))) 16))]
-    (clojure.string/join (concat
-                          (repeatedly 8 f) "-"
-                          (repeatedly 4 f) "-4"
-                          (repeatedly 3 f) "-"
-                          (g) (repeatedly 3 f) "-"
-                          (repeatedly 12 f)))))
+(def random-uuid gstring/getRandomString)
 
 (defn time-formatter
   [time]
@@ -205,7 +193,7 @@
   [msg]
   (if (:uuid msg)
     msg
-    (assoc msg :uuid (make-random-uuid))))
+    (assoc msg :uuid (random-uuid))))
 
 (defn ensure-msg-vec
   "Ensures the :msg is a vector. Can happen that it's not if raw-log was called"
@@ -219,7 +207,7 @@
   [msg]
   (if (:time msg)
     msg
-    (assoc msg :time (gdate/fromTimestamp (goog.now)))))
+    (assoc msg :time (goog.date.DateTime.))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -232,47 +220,50 @@
   "Renders a single log message."
   [lg-ev]
   {:pre [(valid-log? lg-ev)]}
-  [:li {:style {:list-style-type "none"}}
-   ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
-   ;; TODO: Refactor into a let-fn and func calls
-   (if-let [rndr (get-in lg-ev [:render :time])]
-     ;; Still need to compose all the given render functions here
-     [(apply comp rndr) (:time lg-ev)]
-     (str (:time lg-ev)))
-   " "
-   (if-let [rndr (get-in lg-ev [:render :ns])]
-     [(apply comp rndr) (:ns lg-ev)]
-     (:ns lg-ev))
-   (when-not (empty? (:ns lg-ev)) "/")
-   (if-let [rndr (get-in lg-ev [:render :type])]
-     [(apply comp rndr) (:type lg-ev)]
-     (name (:type lg-ev)))
-   " "
-   ;; Wrap the message in a span to allow clicking it and logging it to the
-   ;; console
-   [:span
-    {:style {:cursor "pointer"}
-     ;; When clicking on a log message we dump it to the console:
-     :on-click (fn[_]
-                 (do 
-                   (js/console.group
-                    "%s%s%s -- %s"
-                    (:ns lg-ev)
-                    (if (empty? (:ns lg-ev)) "" "/")
-                    (name (:type lg-ev))
-                    ;; We can't dered DB here to get the formatter
-                    ;; or reagent will re-render everything always
-                    (time-formatter (:time lg-ev)))
-                   ;; console.dir firefox & chrome only?
-                   ;;(mapv #(js/console.dir %) (:msg lg-ev))
-                   ;; %o calls either .dir() or .dirxml() if it's a DOM node
-                   ;; This means we get a real string and a real DOM node into
-                   ;; our console. Probably better than always calling dir
-                   (mapv #(js/console.log "%o" %) (:msg lg-ev))
-                   (js/console.groupEnd)))}
-    (if-let [rndr (get-in lg-ev [:render :msg])]
-      [(apply comp rndr) (:msg lg-ev)]
-      (str (:msg lg-ev)))]])
+  ;; Caching only improves rendering by like 10% :(
+  (if-let [cached (::cached-render lg-ev)]
+    cached
+    [:li {:style {:list-style-type "none"}}
+     ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
+     ;; TODO: Refactor into a let-fn and func calls
+     (if-let [rndr (get-in lg-ev [:render :time])]
+       ;; Still need to compose all the given render functions here
+       [(apply comp rndr) (:time lg-ev)]
+       (str (:time lg-ev)))
+     " "
+     (if-let [rndr (get-in lg-ev [:render :ns])]
+       [(apply comp rndr) (:ns lg-ev)]
+       (:ns lg-ev))
+     (when-not (empty? (:ns lg-ev)) "/")
+     (if-let [rndr (get-in lg-ev [:render :type])]
+       [(apply comp rndr) (:type lg-ev)]
+       (name (:type lg-ev)))
+     " "
+     ;; Wrap the message in a span to allow clicking it and logging it to the
+     ;; console
+     [:span
+      {:style {:cursor "pointer"}
+       ;; When clicking on a log message we dump it to the console:
+       :on-click (fn[_]
+                   (do 
+                     (js/console.group
+                      "%s%s%s -- %s"
+                      (:ns lg-ev)
+                      (if (empty? (:ns lg-ev)) "" "/")
+                      (name (:type lg-ev))
+                      ;; We can't dered DB here to get the formatter
+                      ;; or reagent will re-render everything always
+                      (time-formatter (:time lg-ev)))
+                     ;; console.dir firefox & chrome only?
+                     ;;(mapv #(js/console.dir %) (:msg lg-ev))
+                     ;; %o calls either .dir() or .dirxml() if it's a DOM node
+                     ;; This means we get a real string and a real DOM node into
+                     ;; our console. Probably better than always calling dir
+                     (mapv #(js/console.log "%o" %) (:msg lg-ev))
+                     (js/console.groupEnd)))}
+      (if-let [rndr (get-in lg-ev [:render :msg])]
+        [(apply comp rndr) (:msg lg-ev)]
+        (str (:msg lg-ev)))]]))
 
 ;; For rendering only the parts we see in a list: we have to know OR
 ;; estimate:
@@ -328,7 +319,7 @@
                 :margin "0em"
                 :line-height "1.06em"}}
    ;; Create the rendered log message
-   (for [lg logs #_(take 30 logs)]
+   (for [lg (rseq logs) #_(subvec logs 30)]
      ^{:key (:uuid lg)} [render-msg lg])])
 
 (defn render-tab-item
@@ -488,6 +479,10 @@
    (contains? log-ev :msg) ;; can be anything (even nil!), but must exist
    ))
 
+(defn cache-render
+  [lg-ev]
+  (assoc lg-ev ::cached-render (render-msg lg-ev)))
+
 (defn log+rules
   "Adds some data to the log message (such as date and uuid) if it's not already
   there"
@@ -496,7 +491,8 @@
   (-> log-ev
       ensure-uuid
       ensure-msg-vec
-      ensure-timed))
+      ensure-timed
+      cache-render))
 
 (defn single-transduce
   "Takes a transducer (xform) and an item and applies the transducer to the
@@ -517,23 +513,21 @@
   ;; be filling up.
   ;; Problem: Can't put the transducer into the chan argument since it's empty
   ;; when called in the beginning
-  ;; TODO: Rewrite with mix & toggle
+  ;; TODO: Rewrite with mix & toggle. Then remix everytime the transducers
+  ;; change?
   (let [lg-ch (tap (:log-sub-ch @db) (chan (sliding-buffer (:freeze-buffer @db))))
         freeze-ch (:freeze-ch @db)]
     (go-loop [is-frozen false]
-      ;; l-chans: What ch to listen
+      ;; l-chans: What chnnels to listen to
       (let [l-chans (if is-frozen [freeze-ch] [freeze-ch lg-ch])
             ;; The transducers that do the global transducing such as rendering
             ;; Might change over time so they're re-evaluated here
-            transd (apply comp
-                          (vals (:transducers @db)))
+            transd (apply comp (vals (:transducers @db)))
             [v ch] (alts! l-chans)]
         (when (= ch lg-ch)
           ;; Put the log event into the db
           (action! db :new-log
-                   (log+rules
-                    ;; TODO: apply the transducer in a channel?
-                    db (single-transduce transd v))))
+                   (log+rules db (single-transduce transd v))))
         (recur (and (= ch freeze-ch) v))))))
 
 
@@ -643,7 +637,7 @@
   [db {:keys [data]}]
   {:pre [(valid-log? data)]}
   ;; First put it in the global log message vector:
-  (swap! db update-in [:logs] #(cons data %))
+  (swap! db update-in [:logs] conj data)
   ;; Then also put it into all tabs :logs vectors
   (doseq [tab (keys (:tabs @db))]
     (let [td (apply comp
@@ -654,7 +648,7 @@
           kork [:tabs tab :logs]]
       ;; Don't swap if it's empty. Doh
       (when-not (empty? data-td) 
-        (swap! db update-in kork #(cons data-td %))))))
+        (swap! db update-in kork conj data-td)))))
 
 ;; Invalidades the cached log vector in a certain tab. This is needed when the
 ;; search term is changed or new tab-transduceres were added
@@ -768,7 +762,7 @@
   [db ns_type & msg]
   ;; Even though we could let the time be added later we do it right here to
   ;; have an accurate time
-  (raw-log! db {:time (gdate/fromTimestamp (goog.now))
+  (raw-log! db {:time (goog.date.DateTime.)
                 :type (keyword (name ns_type)) ;; name make ::FOO -> "FOO"
                 ;; (namespace :FOO) is nil, that's why we need (str) here
                 :ns (str (namespace ns_type))
@@ -904,7 +898,7 @@
   [db pred? which color]
   {:pre [(keyword? which) (or (= :ns which) (= :type which))]}
   (register-transducer!
-   db (keyword (make-random-uuid))
+   db (keyword (random-uuid))
    (map
     (fn [msg]
       (if (pred? (which msg)) ;; pluck out :ns or :type
@@ -1002,7 +996,7 @@
   ;; Alias
   (def l log-console)
 
-  (js/console.dir (gdate/fromTimestamp (goog.now)))
+  (js/console.dir (goog.date.DateTime.))
 
   ;; :hour-minute-second-ms : 11:02:23.009
   ;; :time  : 11:01:56.611-04:00

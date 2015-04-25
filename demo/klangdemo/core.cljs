@@ -8,7 +8,8 @@
                             tap close! pub sub timeout take!]]
    [reagent.core :as r]
    [klang.core :refer [tab->type!  tab->ns!  tab->ns*!  *db* logger
-                       ns*->color!  ns->color!  log!  raw-log!] :as k]))
+                       ns*->color!  ns->color!  log!  raw-log!] :as k])
+  (:import goog.date.DateTime))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; For development
@@ -70,7 +71,7 @@
 
 
 ;; Deref to generate logs
-;; @gen-logs
+@gen-logs
 
 (defonce gen (r/atom false))
 
@@ -91,8 +92,8 @@
 
 (demo!)
 
-
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
+
 
 
 ;;(macros/init-debug-prod!)

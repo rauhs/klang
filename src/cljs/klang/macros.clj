@@ -150,7 +150,7 @@
   [logger level]
   ;; Can't emit macros in clojurescript (right?)
   ;;`(~'defmacro ~logger [& ~'_] )
-  `(~'defn ~logger [& ~'_])
+  `(~'defn ^{:const true :private true} ~logger [& ~'_])
   #_(if (single-transduce (apply comp @xforms) level)
       `(~'defn ~logger [& ~'msg] (klang.core/log! ~level ~'msg))
       ;; Closure compiler wont elide this useless function:

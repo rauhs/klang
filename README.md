@@ -447,6 +447,9 @@ supervisord):
 * We should dump all meta information of the log message when user clicks on it.
   But not display it in the UI. This would allow for compact yet rich messages.
   Macros should attach line number and filename to the meta ifno.
+* Clicking on the time of a log message should go to the `:all` tab and show
+  the message in the context of all log messages. Prereq: Performance with
+  partial rendering.
 
 ## Ideas
 
