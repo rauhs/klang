@@ -71,7 +71,7 @@
 
 
 ;; Deref to generate logs
-;; @gen-logs
+@gen-logs
 
 (defonce gen (r/atom false))
 
@@ -91,7 +91,6 @@
 (r/render [demo-ui gen] js/document.body)
 
 (demo!)
-
 
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
 

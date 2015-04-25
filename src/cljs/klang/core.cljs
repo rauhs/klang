@@ -319,7 +319,7 @@
                 :margin "0em"
                 :line-height "1.06em"}}
    ;; Create the rendered log message
-   (for [lg logs #_(take 30 logs)]
+   (for [lg (rseq logs) #_(take 30 logs)]
      ^{:key (:uuid lg)} [render-msg lg])])
 
 (defn render-tab-item
@@ -635,7 +635,7 @@
   {:pre [(valid-log? data)]}
   (let [data (assoc data ::cached-render (render-msg data))]
     ;; First put it in the global log message vector:
-    (swap! db update-in [:logs] #(cons data %))
+    (swap! db update-in [:logs] conj data)
     ;; Then also put it into all tabs :logs vectors
     (doseq [tab (keys (:tabs @db))]
       (let [td (apply comp
@@ -646,7 +646,7 @@
             kork [:tabs tab :logs]]
         ;; Don't swap if it's empty. Doh
         (when-not (empty? data-td) 
-          (swap! db update-in kork #(cons data-td %)))))))
+          (swap! db update-in kork conj data-td))))))
 
 ;; Invalidades the cached log vector in a certain tab. This is needed when the
 ;; search term is changed or new tab-transduceres were added
