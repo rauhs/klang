@@ -12,6 +12,7 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
+   [goog.string :as gstring]
    [goog.style :as gstyle])
   (:import 
    goog.date.DateTime
@@ -175,20 +176,7 @@
   (or (= c p) 
       (parent? p c)))
 
-;; TODO: Just use a simple counter instead
-;; OR use goog.string.getRandomString
-(defn make-random-uuid
-  " Returns pseudo randomly generated UUID,
-  like: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
-  []
-  (letfn [(f [] (.toString (rand-int 16) 16))
-          (g [] (.toString  (bit-or 0x8 (bit-and 0x3 (rand-int 15))) 16))]
-    (clojure.string/join (concat
-                          (repeatedly 8 f) "-"
-                          (repeatedly 4 f) "-4"
-                          (repeatedly 3 f) "-"
-                          (g) (repeatedly 3 f) "-"
-                          (repeatedly 12 f)))))
+(def random-uuid gstring/getRandomString)
 
 (defn time-formatter
   [time]
@@ -205,7 +193,7 @@
   [msg]
   (if (:uuid msg)
     msg
-    (assoc msg :uuid (make-random-uuid))))
+    (assoc msg :uuid (random-uuid))))
 
 (defn ensure-msg-vec
   "Ensures the :msg is a vector. Can happen that it's not if raw-log was called"
@@ -908,7 +896,7 @@
   [db pred? which color]
   {:pre [(keyword? which) (or (= :ns which) (= :type which))]}
   (register-transducer!
-   db (keyword (make-random-uuid))
+   db (keyword (random-uuid))
    (map
     (fn [msg]
       (if (pred? (which msg)) ;; pluck out :ns or :type
