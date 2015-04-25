@@ -20,7 +20,7 @@ print-%: ; @echo $*=$($*)
 
 
 demo :
-	echo "<html><head></head>" > demo.html
+	echo "<html><head><title>Klang logging demo</title></head>" > demo.html
 	echo "<body><script>" >> demo.html
 	cat ./resources/public/cljs/demo/app.js >> demo.html
 	echo "</script></body></html>" >> demo.html

@@ -94,6 +94,14 @@
 
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
 
+;;(macros/logger! 'klang.core/log!)
+;; (macros/add-form-meta! :line :file)
+
+;; (macros/log! ::INFO :test-macro)
+;; (macros/info! :test-info)
+
+;;(let [x :foo] (macros/env!))
+
 
 
 ;;(macros/init-debug-prod!)

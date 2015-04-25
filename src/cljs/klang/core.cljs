@@ -749,9 +749,9 @@
 (defmulti log!
   "Logs a message msg for namespace and level ns_type.
   Eg:
-  (log ::WARN :server-down)
-  (log db ::WARN :server-down)
-  (log :bouncer.core/INFO :server-spotted)"
+  (log! ::WARN :server-down)
+  (log! db ::WARN :server-down)
+  (log! :bouncer.core/INFO :server-spotted)"
   (fn [db_or_nslevel & _] (keyword? db_or_nslevel)))
 
 (defmethod log! true
