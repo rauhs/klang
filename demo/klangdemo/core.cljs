@@ -71,7 +71,7 @@
 
 
 ;; Deref to generate logs
-@gen-logs
+;; @gen-logs
 
 (defonce gen (r/atom false))
 
