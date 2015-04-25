@@ -319,7 +319,7 @@
                 :margin "0em"
                 :line-height "1.06em"}}
    ;; Create the rendered log message
-   (for [lg (rseq logs) #_(take 30 logs)]
+   (for [lg (rseq logs) #_(subvec logs 30)]
      ^{:key (:uuid lg)} [render-msg lg])])
 
 (defn render-tab-item
@@ -479,6 +479,10 @@
    (contains? log-ev :msg) ;; can be anything (even nil!), but must exist
    ))
 
+(defn cache-render
+  [lg-ev]
+  (assoc lg-ev ::cached-render (render-msg lg-ev)))
+
 (defn log+rules
   "Adds some data to the log message (such as date and uuid) if it's not already
   there"
@@ -487,7 +491,8 @@
   (-> log-ev
       ensure-uuid
       ensure-msg-vec
-      ensure-timed))
+      ensure-timed
+      cache-render))
 
 (defn single-transduce
   "Takes a transducer (xform) and an item and applies the transducer to the
@@ -508,23 +513,21 @@
   ;; be filling up.
   ;; Problem: Can't put the transducer into the chan argument since it's empty
   ;; when called in the beginning
-  ;; TODO: Rewrite with mix & toggle
+  ;; TODO: Rewrite with mix & toggle. Then remix everytime the transducers
+  ;; change?
   (let [lg-ch (tap (:log-sub-ch @db) (chan (sliding-buffer (:freeze-buffer @db))))
         freeze-ch (:freeze-ch @db)]
     (go-loop [is-frozen false]
-      ;; l-chans: What ch to listen
+      ;; l-chans: What chnnels to listen to
       (let [l-chans (if is-frozen [freeze-ch] [freeze-ch lg-ch])
             ;; The transducers that do the global transducing such as rendering
             ;; Might change over time so they're re-evaluated here
-            transd (apply comp
-                          (vals (:transducers @db)))
+            transd (apply comp (vals (:transducers @db)))
             [v ch] (alts! l-chans)]
         (when (= ch lg-ch)
           ;; Put the log event into the db
           (action! db :new-log
-                   (log+rules
-                    ;; TODO: apply the transducer in a channel?
-                    db (single-transduce transd v))))
+                   (log+rules db (single-transduce transd v))))
         (recur (and (= ch freeze-ch) v))))))
 
 
@@ -633,20 +636,19 @@
 (defmethod handle-action :new-log
   [db {:keys [data]}]
   {:pre [(valid-log? data)]}
-  (let [data (assoc data ::cached-render (render-msg data))]
-    ;; First put it in the global log message vector:
-    (swap! db update-in [:logs] conj data)
-    ;; Then also put it into all tabs :logs vectors
-    (doseq [tab (keys (:tabs @db))]
-      (let [td (apply comp
-                      (search-transducer db tab)
-                      (get-in @db [:tabs tab :transducers]))
-            ;; A hack: Run a transducer on a single element and pick out the elem
-            data-td (single-transduce td data)
-            kork [:tabs tab :logs]]
-        ;; Don't swap if it's empty. Doh
-        (when-not (empty? data-td) 
-          (swap! db update-in kork conj data-td))))))
+  ;; First put it in the global log message vector:
+  (swap! db update-in [:logs] conj data)
+  ;; Then also put it into all tabs :logs vectors
+  (doseq [tab (keys (:tabs @db))]
+    (let [td (apply comp
+                    (search-transducer db tab)
+                    (get-in @db [:tabs tab :transducers]))
+          ;; A hack: Run a transducer on a single element and pick out the elem
+          data-td (single-transduce td data)
+          kork [:tabs tab :logs]]
+      ;; Don't swap if it's empty. Doh
+      (when-not (empty? data-td) 
+        (swap! db update-in kork conj data-td)))))
 
 ;; Invalidades the cached log vector in a certain tab. This is needed when the
 ;; search term is changed or new tab-transduceres were added
