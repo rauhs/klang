@@ -61,7 +61,7 @@
   []
   {
    ;; Where ALL logs will be pushed. The raw log events including time, ns,
-   ;; level, msg. DO NEVER LISTEN TO THIS!!
+   ;; type, msg. DO NEVER LISTEN TO THIS!!
    :log-pub-ch nil              
    ;; Tap into the log-in-ch with mult distributes log events to multiple other
    ;; channels
@@ -213,57 +213,79 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Core rendering the logs
 
+(defn log-dump-console
+  "Takes a log event and dumps all kinds of info about it to the developer
+  console. Works under chrome. Probably also under firefox."
+  [lg-ev]
+  (.group js/console
+          "%s%s%s -- %s"
+          (:ns lg-ev)
+          (if (empty? (:ns lg-ev)) "" "/")
+          (name (:type lg-ev))
+          ;; We can't dered DB here to get the formatter
+          ;; or reagent will re-render everything always
+          (time-formatter (:time lg-ev)))
+  ;; The meta data contains things like filename and line number of the original
+  ;; log call. It might also catch the local bindings so we print them here.
+  (when-let [meta (:meta lg-ev)]
+    (.group js/console "Meta Data")
+    (some->> (:line meta) (.log js/console "Line-num: %d"))
+    (some->> (:file meta) (.log js/console "Filename: %s"))
+    (when-let [env (seq (:env meta))]
+      ;; 3rd level nested group. Oh yeah
+      (.group js/console "Local Bindings")
+      (doseq [[k v] env]
+        (.log js/console "%s : %o" (pr-str k) v))
+      (.groupEnd js/console))
+    ;; The rest of the meta info, not sure if this should ever happen:
+    (when-let [meta' (seq (dissoc meta :file :line :env))]
+      (doseq [[k v] meta']
+        (js/console.log "%s : %o" (pr-str k) v)))
+    (.groupEnd js/console))
+  ;; console.dir firefox & chrome only?
+  ;;(mapv #(js/console.dir %) (:msg lg-ev))
+  ;; %o calls either .dir() or .dirxml() if it's a DOM node
+  ;; This means we get a real string and a real DOM node into
+  ;; our console. Probably better than always calling dir
+  (doseq [v (:msg lg-ev)]
+    ;; truncate adds the elippsis...
+    (js/console.log "%o --- %s" v (-> v pr-str (gstring/truncate 20))))
+  #_(mapv #(js/console.log "%o" %) (:msg lg-ev))
+  (.groupEnd js/console))
+
 ;; Renders a line:
-;; TIME NS/LEVEL Msg
+;; TIME NS/TYPE Msg
 ;; TODO: We can also pre-render an element when it arrives.
 (defn render-msg
   "Renders a single log message."
   [lg-ev]
   {:pre [(valid-log? lg-ev)]}
   ;; Caching only improves rendering by like 10% :(
-  (if-let [cached (::cached-render lg-ev)]
-    cached
-    [:li {:style {:list-style-type "none"}}
-     ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
-     ;; TODO: Refactor into a let-fn and func calls
-     (if-let [rndr (get-in lg-ev [:render :time])]
-       ;; Still need to compose all the given render functions here
-       [(apply comp rndr) (:time lg-ev)]
-       (str (:time lg-ev)))
-     " "
-     (if-let [rndr (get-in lg-ev [:render :ns])]
-       [(apply comp rndr) (:ns lg-ev)]
-       (:ns lg-ev))
-     (when-not (empty? (:ns lg-ev)) "/")
-     (if-let [rndr (get-in lg-ev [:render :type])]
-       [(apply comp rndr) (:type lg-ev)]
-       (name (:type lg-ev)))
-     " "
-     ;; Wrap the message in a span to allow clicking it and logging it to the
-     ;; console
-     [:span
-      {:style {:cursor "pointer"}
-       ;; When clicking on a log message we dump it to the console:
-       :on-click (fn[_]
-                   (do 
-                     (js/console.group
-                      "%s%s%s -- %s"
-                      (:ns lg-ev)
-                      (if (empty? (:ns lg-ev)) "" "/")
-                      (name (:type lg-ev))
-                      ;; We can't dered DB here to get the formatter
-                      ;; or reagent will re-render everything always
-                      (time-formatter (:time lg-ev)))
-                     ;; console.dir firefox & chrome only?
-                     ;;(mapv #(js/console.dir %) (:msg lg-ev))
-                     ;; %o calls either .dir() or .dirxml() if it's a DOM node
-                     ;; This means we get a real string and a real DOM node into
-                     ;; our console. Probably better than always calling dir
-                     (mapv #(js/console.log "%o" %) (:msg lg-ev))
-                     (js/console.groupEnd)))}
-      (if-let [rndr (get-in lg-ev [:render :msg])]
-        [(apply comp rndr) (:msg lg-ev)]
-        (str (:msg lg-ev)))]]))
+  (or
+   (::cached-render lg-ev)
+   [:li {:style {:list-style-type "none"}}
+    ;; TODO: Could also accept :render :log-ev which renders the entire lg-ev?
+    ;; TODO: Refactor into a let-fn and func calls
+    (if-let [rndr (get-in lg-ev [:render :time])]
+      ;; Still need to compose all the given render functions here
+      [(apply comp rndr) (:time lg-ev)]
+      (str (:time lg-ev)))
+    " "
+    (if-let [rndr (get-in lg-ev [:render :ns])]
+      [(apply comp rndr) (:ns lg-ev)]
+      (:ns lg-ev))
+    (when-not (empty? (:ns lg-ev)) "/")
+    (if-let [rndr (get-in lg-ev [:render :type])]
+      [(apply comp rndr) (:type lg-ev)]
+      (name (:type lg-ev)))
+    " "
+    [:span
+     {:style {:cursor "pointer"}
+      :on-click (partial log-dump-console lg-ev)}
+     ;;:on-click (fn[_] (partial) log-dump-console lg-ev)}
+     (if-let [rndr (get-in lg-ev [:render :msg])]
+       [(apply comp rndr) (:msg lg-ev)]
+       (str (:msg lg-ev)))]]))
 
 ;; For rendering only the parts we see in a list: we have to know OR
 ;; estimate:
@@ -483,6 +505,22 @@
   [lg-ev]
   (assoc lg-ev ::cached-render (render-msg lg-ev)))
 
+(defn move-meta-data
+  "If the log message came from a macro, it might pass along meta information
+  such as filename and line number of the log call. This is passed in as a
+  special symbol of the first element in the :msg of the log event. This
+  function removes this special symbol and instead put the meta information into
+  :meta of the log event."
+  [lg-ev]
+  (condp = (first (:msg lg-ev))
+    'klang.core/meta-data
+    (-> lg-ev 
+        ;; Remove the symbol from the log :msg
+        (update-in [:msg] rest)
+        ;; Instead put the meta data into :meta
+        (assoc :meta (meta (-> lg-ev :msg first))))
+    lg-ev))
+
 (defn log+rules
   "Adds some data to the log message (such as date and uuid) if it's not already
   there"
@@ -492,6 +530,7 @@
       ensure-uuid
       ensure-msg-vec
       ensure-timed
+      move-meta-data ;; Needs to come before cache-render!
       cache-render))
 
 (defn single-transduce
@@ -534,7 +573,7 @@
 (defn search-transducer
   "Returns a transducer that filters given the log messages according to the
   search term given in the database for the current active tab.
-  Does a full text search on time, namespace, level and message.
+  Does a full text search on time, namespace, type and message.
   The format is like:
   11:28:27.793 my.ns/INFO [\"Log msg 0\"]"
   ([db] (search-transducer db (:showing-tab @db)))
@@ -747,12 +786,12 @@
    (put! (:log-pub-ch @db) lg-ev)))
 
 (defmulti log!
-  "Logs a message msg for namespace and level ns_type.
+  "Logs a message msg for namespace and ns_type.
   Eg:
   (log! ::WARN :server-down)
   (log! db ::WARN :server-down)
   (log! :bouncer.core/INFO :server-spotted)"
-  (fn [db_or_nslevel & _] (keyword? db_or_nslevel)))
+  (fn [db_or_nstype & _] (keyword? db_or_nstype)))
 
 (defmethod log! true
   [ns_type & msg]
@@ -769,17 +808,17 @@
                 :msg (vec msg)}))
 
 (defn logger
-  "Creates a new logger with the keyword `ns_level'. The keyword ns_level is
-  used to determine what namespace and level the logger logs to. For instance
-  :my.app/INFO will create a logger with namespace 'my.app and logger level
+  "Creates a new logger with the keyword `ns_type'. The keyword ns_type is
+  used to determine what namespace and type the logger logs to. For instance
+  :my.app/INFO will create a logger with namespace 'my.app and logger type
   :INFO.
   Returns a function that can be called to log to that logger.
   If given db and log will use this instead of the global ones."
-  ([ns_level] (logger *db* ns_level))
-  ([db ns_level]
-   {:pre [(keyword? ns_level)]}
+  ([ns_type] (logger *db* ns_type))
+  ([db ns_type]
+   {:pre [(keyword? ns_type)]}
    (fn [& msg]
-     (apply log! db ns_level msg))))
+     (apply log! db ns_type msg))))
 
 (defn init-single-mode!
   "Inits the logging library for single user mode. Ie you can only have one log
@@ -858,7 +897,7 @@
 (defn msg->str
   "Converts a message to a string. Also calls js->clj."
   [msg]
-  (as-> (str (js->clj msg)) s
+  (as-> (pr-str (js->clj msg)) s
     (.substr s 1 (- (.-length s) 2))))
 
 (defn register-highlighter!

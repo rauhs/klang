@@ -426,13 +426,14 @@ The current log buffer is 1000 messages but you may increase it by manually
 I'll suggest those log types in order to have same string lengths (similar to
 supervisord):
 
-* `:TRAC` -- trace
-* `:DEBG` -- debug
-* `:INFO`
-* `:WARN`
-* `:ERRO`
-* `:CRIT` -- critical
-* `:FATA` -- fatal
+* `:TRAC` -- trace, use it if you dump vars
+* `:DEBG` -- debug, very fine grained. Low level
+* `:INFO` -- Default logging for all other
+* `:WARN` -- Something isn't pretty but the app is ok
+* `:ERRO` -- We have an error but we can continue with program execution.
+* `:CRIT` -- critical, cannot continue normal program execution but the code
+             itself is fine.
+* `:FATA` -- fatal, We cannot continue with execution. Code needs fixing.
 
 # TODO
 

@@ -94,20 +94,19 @@
 
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
 
-;;(macros/logger! 'klang.core/log!)
-;; (macros/add-form-meta! :line :file)
+(macros/logger! 'klang.core/log!)
+;;(macros/add-form-meta! :line :file)
+(macros/add-form-meta! :line)
+;; This adds the enviornment to every log call
+(macros/add-form-env! true)
 
-;; (macros/log! ::INFO :test-macro)
-;; (macros/info! :test-info)
+(macros/log! ::INFO :test-macro)
+(macros/info! :test-info)
 
-;;(let [x :foo] (macros/env!))
+(let [x :foo
+      this-is [:lots :of 'fun]]
+  (macros/env! :I-can-dump-local)
+  (macros/warn! :click "ME"))
 
-
-
-;;(macros/init-debug-prod!)
-;;(macros/init-dev!)
-;;(macros/log! ::WARN :hi-with-macros)
-
-;;(macros/info! :info-ex "logging")
-;;(macros/warn! :dont-do-this "because")
+;;(macros/env! :no-local-bindings ":(")
 
