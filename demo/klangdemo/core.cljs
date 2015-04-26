@@ -94,11 +94,29 @@
 
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
 
+;; For development
+(macros/clear-vars!)
+
 (macros/logger! 'klang.core/log!)
+
+(macros/default-emit! true)
+
 ;;(macros/add-form-meta! :line :file)
 (macros/add-form-meta! :line)
+
 ;; This adds the enviornment to every log call
 (macros/add-form-env! true)
+
+(macros/add-blacklist! "*/FATA")
+(macros/add-whitelist! "*/FATA")
+
+(macros/fata! :YOU_SHOULD_NOT_SEE_THIS)
+(macros/log! :FATA "this will still make it")
+(macros/add-blacklist! "*FATA")
+(macros/log! :FATA "this shoudl not be seen")
+
+(macros/add-blacklist! "one.bad.ns*")
+(macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
 
 (macros/log! ::INFO :test-macro)
 (macros/info! :test-info)

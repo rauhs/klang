@@ -249,7 +249,7 @@
   ;; our console. Probably better than always calling dir
   (doseq [v (:msg lg-ev)]
     ;; truncate adds the elippsis...
-    (js/console.log "%o --- %s" v (-> v pr-str (gstring/truncate 20))))
+    (js/console.log "%O --- %s" v (-> v pr-str (gstring/truncate 20))))
   #_(mapv #(js/console.log "%o" %) (:msg lg-ev))
   (.groupEnd js/console))
 

@@ -142,19 +142,20 @@ The only required fields are `:msg` and `:type`, all others can be omitted.
 The `:time` defaults to the current time when the message is added.
 
 # Use cases
-The library can be used for different use cases which are described in the following sections:
+The library can be used for different use cases which are described in the
+following sections:
 
 ## Web browser app development
-This is likely the most common use case. You're developing a
-Clojurescript app for the browser. You want powerful logging.
-Simply require the library and call the API functions to log.
+This is likely the most common use case. You're developing a Clojurescript app
+for the browser. You want powerful logging. Simply require the library and call
+the API functions to log.
 
 ### With deployment to clients
 In most use cases for web app development you'll want to remove logging data and
 the overhead of Klang from your JS code for deployment.
-In this case you'll need to use a few macros to introduce a level of indirection
-that allows you to elide whatever logs you don't want to make it into function
-calls.
+In this case you should use the macros of klang which introduce a level of
+indirection that allows you to elide whatever logs you don't want to make it
+into function calls.
 
 Personally, I wouldn't even want any Klang code to stay in a production app
 since the logging code of Klang isn't too small.
@@ -162,141 +163,101 @@ Hence, in production I want to log a subset of messages (such as warn/error/info
 but *not* trace/debug) to be pushed into a global core.async channel where I can
 send them to my server (or wherever) in case an error occurs.
 
-This library *could* offer this functionality but I think that most
-developers will have a slight different opinion on what to do with
-their logs so it's best to just write them yourself.
-This is why I've chosen to give this recipe that only has a few lines
-of code and everybody can adapt it to their needs:
+The `klang.macros` namespace offers a few additional features to the normal
+function calls:
+
+* Setup of whitelist and blacklist to elide specific log calls
+* Add line number and file name in your cljs file to every log call
+* Add local bindings of your log call
+* Change the actual log function being called (for instance your own function
+  instead for production)
+
+A quick code example:
 
 ```clj
-;; file-name: your/app/logging.clj -- note: /Not/ cljs
-;; 
-;; This requires Clojure 1.7 due to the use of transducers. But it can
-;; be modified easily to use simple (predicate) functions.
-;; This macro file (.clj) is used in both, your production and dev environment.
-;; You'll call them differently by using different :source-paths in your
-;; leiningen configuration.
-
-;; The global atom holds the filters/transducers that determine if the log! call
-;; should be elided or not:
-;; These transducers live only during the compilation phase and will not result
-;; in any javascript code.
-;; Q: Why transducers and not just an array of predicate functions?
-;; A: We may be interested in changing (ie. (map..)) the passed in keyword. For
-;; instance by removing the namespace from the keyword.
-;; The function transduces on (namespaced) keywords which is just the very first
-;; argument of the `log!' function.
-
-;; The transducers that are applied before emitting code:
-(defonce xforms (atom [(filter (constantly true))]))
-
-;; The clojurescript function that is called when we emit code with the macro:
-(def logger 'klang.core/log!)
-
-(defn logger! [log-sym]
-  (alter-var-root (var logger) (fn[_] log-sym)))
-
-;; True if the macro should add line information to each log! call
-(def add-line-nr false)
-
-(defn line-nr! [tf]
-  (alter-var-root (var add-line-nr) (fn[_] tf)))
-
-(defn single-transduce
-  "Takes a transducer (xform) and an item and applies the transducer to the
-  singe element and returnes the transduced item. Note: No reducing is
-  involved. Returns nil if there was no result."
-  [xform x]
-  ((xform (fn[_ r] r)) nil x))
-
-;; You may also make this a macro if you want to call it from cljs
-(defn strip-ns!
-  "Adds a transducer so that namespace information is stripped from the log!
-  call. So: ::FOO -> :FOO"
-  []
-  (swap! xforms conj
-         (map (fn[type] (keyword (name type)))))
-  nil)
-
-;; You'll often see return nil here because we don't want to return anything in
-;; the macro calls
-(defmacro init-dev! []
-  (line-nr! true)
-  nil)
-
-(defmacro init-debug-prod!
-  "Sets up logging for production "
-  []
-  ;; For production we call this log function which can do whatever:
-  (logger! 'my.app.log/log->server!)
-  (line-nr! false)
-  (strip-ns!)
-  (swap! xforms conj
-         ;; Only emit :ERRO and :WARN messages log calls:
-         (comp 
-          (filter #(some (partial = (name %))
-                         ["ERRO" "WARN"]))))
-  nil)
-
-(defmacro init-prod!
-  "Production: Strip all logging calls."
-  []
-  (logger! nil) ;; Not needed but just in case
-  (swap! xforms conj
-         (filter (constantly false)))
-  nil)
-
-;; The main macro to call all thoughout your cljs code:
-;; ns_type is your usual ::INFO, ::WARN etc.
-(defmacro log!
-  "Don't use this. Write your own."
-  [ns_type & msg]
-  ;; when-let returns nil which emits no code so we're good
-  (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
-    (if add-line-nr
-      `(~logger ~nslv-td ~(str "#" (:line (meta &form))) ~@msg)
-      `(~logger ~nslv-td ~@msg))))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Some other convenience function to make logging easier:
-
-(defmacro info! [& msg]
-  `(log! ~(keyword (name (ns-name *ns*)) "INFO") ~@msg))
-
-(defmacro warn! [& msg]
-  `(log! ~(keyword (name (ns-name *ns*)) "WARN") ~@msg))
-
-;; Note that while writing macros you may need some figwheel restarts in case of
-;; crashes and/or errors.
-```
-
-I could not offer the same flexible functionality from the library itself since
-passing in transducers from clojurescript code to clojure macros is very
-awkward and I'd rather not make people deal with this.
-
-This is a long template. But I think it's better to not include this in Klang
-since it's more flexible if users set it up themself.
-
-You can also add file name in the meta information of `&form` but I see no need
-for it due to namespaced keywords.
-
-Then setup and call your logging like so:
-
-```clj
-;; -- filename: your/app/setup.cljs
-(ns your.app.setup
+(ns your.ns.core
   (:require-macros
-   [your.app.logging :refer [log! info! warn!] :as lgmacros]))
+   [klang.macros :as macros]))
 
-(lgmacros/init-dev!) ;; Or whatever you're in (use leiningen profiles)
+;; NOTE:
+;; Most of the following macro calls emit ZERO code so these are just macros
+;; that drive your compilation.
 
-(log! ::INFO "hello" :there)
-(info! :I "like" :chatting)
-(warn! :a-lot)
+;; By default this is setup:
+(macros/logger! 'klang.core/log!)
+
+;; But you could also have your own log function being called:
+(macros/logger! 'your.app.logging/send-to-server-on-error!)
+
+;; This adds the filename & line number of every log call:
+(macros/add-form-meta! :line :file)
+
+;; This adds the environment (local bindings) to every log call
+(macros/add-form-env! true)
+
+;; Sets the default wheater to emit or elide a log call. This is only used when
+;; neither the whitelist nor the blacklist matches anything. If both match then
+;; the blacklist will win.
+(macros/default-emit! true)
+
+
+;; We then have a blacklist and a whitelist too:
+;; This would elide all :*/DEBG messages
+(macros/add-blacklist! "*/DEBG")
+
+;; debg! is just like (log! ::DEBG ...)
+;; This will not result in any code now:
+(macros/debg! :YOU_SHOULD_NOT_SEE_THIS)
+
+;; However non-namespaces keywords don't match the above, so this still calls
+;; log:
+(macros/log! :DEBG "This will be logged")
+
+;; This can be achieved by the following:
+(macros/add-blacklist! "*DEBG")
+;; (not the above will be made into a regex (.*)DEBG$
+
+
+;; We can also add namespaces to the blacklist:
+(macros/add-blacklist! "one.bad.ns*")
+(macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
+
+;; The following log functions exist:
+(macros/log! ::INFO :test-this)
+(macros/log! ::WHATEVER "you don't have to use :INFO etc...")
+(macros/trac! :some "log message")
+(macros/debg! :some "log message")
+(macros/info! :some "log message")
+(macros/warn! :some "log message")
+(macros/erro! :some "log message")
+(macros/crit! :some "log message")
+(macros/fata! :some "log message")
+
+;; A special one is the following:
+(macros/env!)
+;; It will "catch" the local binding (via &env in defmacro) and 
+;; log it.
+
+;; To see the effect you'd have to use it like this:
+(let [x :foo
+      this-is [:lots :of 'fun]]
+  (macros/env! :I-can-dump-local))
+
 ```
 
-You can then switch over to production and get rid of all log calls or forward
-them to your own function.
+**More about env**:
+
+Note that if you called `add-form-env!` then you'll get the environment with
+every log call. It is not added to the message itself but instead is added as
+meta data to the log call. This meta data is invisible to the GUI. You can
+see it by clicking on a log message and checking your browser console.
+
+If this approch of Klang's macros is too inflexible to you then you can
+[Wiki Macros][head over to the wiki] where an approach with transducers is
+shown.
+
+**Note**: The macros are completely optional and the library itself does not use
+  any of them. So you can always just use the normal function call.
 
 ## Server mode
 In this use case you're only interested in viewing logs in a browser window but
@@ -476,5 +437,6 @@ Copyright &copy; 2015 Andre Rauh. Distributed under the
 
 
 [Eclipse Public License]: <https://raw2.github.com/rauhs/klang/master/LICENSE>
+[Wiki Macros]: <https://github.com/rauhs/klang/wiki/Flexible-macros-recipe>
 [Demo]: <http://rauhs.github.io/klang/>
 

@@ -5,23 +5,90 @@
 ;; You'll call them differently by using different :source-paths in your
 ;; leiningen configuration.
 
-;; The global atom holds the transducers that determine if the log! call should
-;; be elided or not:
-;; This lives only during the compilation phase and will not result in any
-;; javascript code
-(def xforms
-  (atom [(filter (constantly true))]))
-
-;; Create a map that allows to say which type + namespace combo is elided?
-;; TODO:
-;;(def ns-whitelist)
-;;(def ns-blacklist)
-;;(def type-whitelist)
-;;(def type-blacklist)
-
-
 ;; The function that is called for logging.
 (def ^:dynamic *logger* 'klang.core/log!)
+;; The function that is called for logging.
+(def ^:dynamic *meta-env* false)
+;; Hold the keywords of which metadata of &form should be added to a log! call
+(def ^:dynamic *form-meta-keywords* #{})
+
+(def ^:dynamic *ns-type-whitelist* [])
+(def ^:dynamic *ns-type-blacklist* [])
+;; If we get nil: What value to map it:
+(def ^:dynamic *ns-type-default* true)
+
+(defmacro clear-vars!
+  "Convenience function to use while REPLing and figwheel'ing."
+  []
+  (alter-var-root #'*ns-type-whitelist* (fn[_] []))
+  (alter-var-root #'*ns-type-blacklist* (fn[_] []))
+  (alter-var-root #'*form-meta-keywords* (fn[_] #{}))
+  nil)
+
+(defmacro default-emit!
+  "Sets the default wheater to emit or elide a log call. This is only used when
+  neither the whitelist nor the blacklist matches anything. If both match then
+  the blacklist will win."
+  [bool]
+  (alter-var-root #'*ns-type-default* (fn[_] (eval bool)))
+  nil)
+
+(defmacro add-whitelist!
+  "Add a string to the whitelist. The string is later used (when calling log) to
+  determine if the log message should be elided or will survive macro
+  expansion. In the end a log call will consult ns-type-match? to determine what
+  to do. Therefore see the example below.
+  If a log call matches the whitelist it will be included.
+  If a log call matches the whitelist and the blacklist it will be elided.
+  If a log call matches neither it will be included.
+  Example:
+  (ns-type-match? \"x.y\" \"x.y\") ;; true
+  (ns-type-match? \"x.y\" \"x.y.*\") ;; false
+  (ns-type-match? \"yes.foo/INFO\" \"yes.*/(INFO|WARN)\") ;; true
+  (ns-type-match? \"yes.foo/DEBG\" \"*/(DEBG|TRAC)\") ;; true"
+  [& ns-type]
+  (alter-var-root #'*ns-type-whitelist*
+                  (fn[prev] (apply conj prev (eval `(vector ~@ns-type)))))
+  nil)
+
+(defmacro add-blacklist!
+  "See docstring for add-whitelist!"
+  [& ns-type]
+  (alter-var-root #'*ns-type-blacklist*
+                  (fn[prev] (apply conj prev (eval `(vector ~@ns-type)))))
+  nil)
+
+;; Stolen from timbre
+(defn- ns-match?
+  "(ns-type-match? \"x.y\" \"x.y\") ;; true
+  (ns-type-match? \"x.y\" \"x.y.*\") ;; false
+  (ns-type-match? \"yes.foo/INFO\" \"yes.*/(INFO|WARN)\") ;; true
+  (ns-type-match? \"yes.foo/DEBG\" \"*/(DEBG|TRAC)\") ;; true"
+  [ns match]
+  (-> (str "^" (-> (str match) (.replace "." "\\.") (.replace "*" "(.*)")) "$")
+      re-pattern (re-find (str ns)) boolean))
+
+;; Stolen from timbre
+(defn relevant-ns-type?
+  "Returns:
+  - true : if the namespace should be included to the log call.
+  - false : if the namespace should be elided.
+  - false : if namespace is in blacklist and whitelist
+  - nil : indifferent, ie not specified by white nor blacklist"
+  [ns-type]
+  (if-some
+      [bool (if (and (empty? *ns-type-whitelist*)
+                     (empty? *ns-type-blacklist*))
+              true ;; true since then the user likely wants all included
+              (and
+               ;; Need to check the blacklist first since it takes priority
+               ;; and otherwise won't get evaluated due to lazyness of and
+               (or (empty? *ns-type-blacklist*)
+                   (not-any? (partial ns-match? ns-type) *ns-type-blacklist*))
+               (or (empty? *ns-type-whitelist*)
+                   (some (partial ns-match? ns-type) *ns-type-whitelist*))))]
+    bool
+    *ns-type-default*))
 
 (defmacro logger!
   "Changes the logger that will be called to log-sym.
@@ -32,17 +99,11 @@
   (alter-var-root #'*logger* (fn[_] (eval log-sym)))
   nil)
 
-;; The function that is called for logging.
-(def ^:dynamic *meta-env* false)
-
 (defmacro add-form-env!
   "Adds the environment (the local bindings) to each log call."
   [bool]
   (alter-var-root #'*meta-env* (fn[_] (eval bool)))
   nil)
-
-;; Hold the keywords of which metadata of &form should be added to a log! call
-(def ^:dynamic *form-meta-keywords* #{})
 
 (defmacro add-form-meta!
   "You can add &form metadata whenever you call log!. Sensible metadata:
@@ -51,14 +112,6 @@
   [& meta-keywords]
   (alter-var-root #'*form-meta-keywords*
                   (fn[prev] (apply conj prev (eval `(hash-set ~@meta-keywords)))))
-  nil)
-
-(defmacro strip-ns!
-  "Adds a transducer so that namespace information is stripped from the log!
-  call"
-  []
-  (swap! xforms conj
-         (map (fn[type] (keyword (name type)))))
   nil)
 
 ;; Stolen from lazytest and adapted for cljs
@@ -75,33 +128,26 @@
     (assoc m :env (local-bindings (:locals env)))
     m))
 
-(defn single-transduce
-  "Takes a transducer (xform) and an item and applies the transducer to the
-  singe element and returnes the transduced item. Note: No reducing is
-  involved. Returns nil if there was no result."
-  [xform x]
-  ((xform (fn[_ r] r)) nil x))
-
 (defn- log'
   "Helper function to emit the actual log function call. Will attach meta data
   according to the config."
-  [form env ns_type msg]
+  [form env ns-type msg]
   (let [meta-d (select-keys (meta form) *form-meta-keywords*)
         meta-d (merge-env meta-d env)
         meta-s `(with-meta 'klang.core/meta-data ~meta-d)]
-    (when-let [nslv-td (single-transduce (apply comp @xforms) ns_type)]
+    (when (relevant-ns-type? (apply str (rest (str ns-type))))
       (if (not-empty meta-d)
         ;; We need some method to pass in the meta data: We cannot assoc the
         ;; metadata to the function or keyword so we have to pass it in as an
         ;; argument which we have to remove again
-        `(~*logger* ~nslv-td ~meta-s ~@msg)
-        `(~*logger* ~nslv-td ~@msg)))))
+        `(~*logger* ~ns-type ~meta-s ~@msg)
+        `(~*logger* ~ns-type ~@msg)))))
 
 (defmacro log!
   "Logs to the main logger. Example:
   (log! ::INFO :my nil \"debug message\")"
-  [ns_type & msg]
-  (log' &form &env (single-transduce (apply comp @xforms) ns_type) msg))
+  [ns-type & msg]
+  (log' &form &env ns-type msg))
 
 (defn- ns-kw
   "Helper function to turn a string like \"foo\" into a namespaced keyword like
@@ -167,30 +213,5 @@
 ;; RDD:
 (comment
 
-  (defmacro init-dev! []
-    ;;(line-nr! true)
-    nil)
-
-  (defmacro init-debug-prod!
-  "Sets up logging for production "
-  []
-  ;;(logger! 'my.app.log/log->server!)
-  (line-nr! false)
-  (strip-ns!)
-  (swap! xforms conj
-         ;; Only allow error message
-         (comp 
-          ;;(filter (fn[type] (= (name type) "ERRO")))
-          (filter #(some (partial = (name %))
-                         ["ERRO" "WARN"]))))
-  nil)
-
-  (defmacro init-prod!
-  "Productin. Strip all logging calls."
-  []
-  (logger! nil) ;; Not needed but just in case
-  (swap! xforms conj
-         (filter (constantly false)))
-  nil)
 
   )
