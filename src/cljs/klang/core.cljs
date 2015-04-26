@@ -1,7 +1,7 @@
 (ns klang.core
   (:require-macros
    [reagent.ratom :refer [reaction] :as re]
-   [klang.macros :refer [deflogger dochan] :as macros]
+   [klang.macros :refer [dochan] :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [reagent.core :as r :refer [atom]]

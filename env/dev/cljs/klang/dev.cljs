@@ -15,4 +15,4 @@
 
 (weasel/connect "ws://localhost:9001" :verbose true)
 
-;;(demo/init!)
+;; (demo/init!) ;; We'll call this in demo itself
