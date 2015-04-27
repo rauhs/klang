@@ -253,7 +253,7 @@ meta data to the log call. This meta data is invisible to the GUI. You can
 see it by clicking on a log message and checking your browser console.
 
 If this approch of Klang's macros is too inflexible to you then you can
-[Wiki Macros](head over to the wiki) where an approach with transducers is
+[head over to the wiki](Wiki Macros) where an approach with transducers is
 shown.
 
 **Note**: The macros are completely optional and the library itself does not use
