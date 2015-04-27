@@ -200,7 +200,6 @@ A quick code example:
 ;; the blacklist will win.
 (macros/default-emit! true)
 
-
 ;; We then have a blacklist and a whitelist too:
 ;; This would elide all :*/DEBG messages
 (macros/add-blacklist! "*/DEBG")
@@ -217,10 +216,17 @@ A quick code example:
 (macros/add-blacklist! "*DEBG")
 ;; (not the above will be made into a regex (.*)DEBG$
 
-
 ;; We can also add namespaces to the blacklist:
 (macros/add-blacklist! "one.bad.ns*")
 (macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
+
+;; Since they're just regular expressions we can:
+(macros/add-blacklist! "my.ns.*/(DEBG|TRAC|INFO)")
+
+;; Whitelisting makes sense if the default emit is false:
+(macros/default-emit! false)
+(macros/add-whitelist! "my.ns.*/(ERRO|FATA)")
+
 
 ;; The following log functions exist:
 (macros/log! ::INFO :test-this)
