@@ -427,7 +427,7 @@
      ;; Otherwise create it:
      (let [newdom (dom/createDom "div" #js{:id domid})] 
        (dom/appendChild js/document.body newdom)
-       (log-console "DOM element for klang created")
+       (log-console "Klang: DOM element created.")
        newdom))))
 
 ;; Taken from highlight-js
