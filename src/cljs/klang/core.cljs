@@ -124,7 +124,7 @@
               :width "calc(100% - 2em - 8em)"
               :top "1em"
               :height "calc(100% - 2em)"
-              :z-index 87509
+              :z-index 9922 ;; fighweel has 10k
               :color "#fff"
               :background "#000"
               :padding 0
@@ -140,7 +140,7 @@
     :width "calc(8em)"
     :top "1em"
     :height "calc(100% - 2em)"
-    :z-index 87509
+    :z-index 9922
     :color "#fff"
     :background "#000"
     :opacity .9
