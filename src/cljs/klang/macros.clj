@@ -7,11 +7,15 @@
 
 ;; The function that is called for logging.
 (def ^:dynamic *logger* 'klang.core/log!)
-;; The function that is called for logging.
+;; True if every macro call also attaches the environemtn (local bindings) to a
+;; log call.
 (def ^:dynamic *meta-env* false)
+;; True if every macro call also attaches a console.trace
+(def ^:dynamic *trace* false)
 ;; Hold the keywords of which metadata of &form should be added to a log! call
 (def ^:dynamic *form-meta-keywords* #{})
 
+;; Holds the 
 (def ^:dynamic *ns-type-whitelist* [])
 (def ^:dynamic *ns-type-blacklist* [])
 ;; If we get nil: What value to map it:
@@ -21,6 +25,8 @@
   "Convenience function to use while REPLing and figwheel'ing."
   []
   (alter-var-root #'*ns-type-whitelist* (fn[_] []))
+  (alter-var-root #'*trace* (fn[_] false))
+  (alter-var-root #'*meta-env* (fn[_] false))
   (alter-var-root #'*ns-type-blacklist* (fn[_] []))
   (alter-var-root #'*form-meta-keywords* (fn[_] #{}))
   nil)
@@ -105,6 +111,12 @@
   (alter-var-root #'*meta-env* (fn[_] (eval bool)))
   nil)
 
+(defmacro add-trace!
+  "Adds a console.trace() to each log call as meta data.."
+  [bool]
+  (alter-var-root #'*trace* (fn[_] (eval bool)))
+  nil)
+
 (defmacro add-form-meta!
   "You can add &form metadata whenever you call log!. Sensible metadata:
   :file - The filename form where you call log!
@@ -128,12 +140,25 @@
     (assoc m :env (local-bindings (:locals env)))
     m))
 
+(defn- trace-data
+  "Attaches the local bindings to the :env of m if the config *meta-env* says
+  so. NOT WORKING."
+  [m]
+  (if *trace*
+    ;;(assoc m :trace `(js/console.trace))
+    ;;(assoc m :trace `(try (goog.debug.Error.) (catch :default ~'err ~'err)))
+    ;;(assoc m :trace `(.getStacktrace goog.debug))
+    m
+    m))
+
 (defn- log'
   "Helper function to emit the actual log function call. Will attach meta data
   according to the config."
   [form env ns-type msg]
   (let [meta-d (select-keys (meta form) *form-meta-keywords*)
         meta-d (merge-env meta-d env)
+        ;;trace-d (trace-data)
+        meta-d (trace-data meta-d)
         meta-s `(with-meta 'klang.core/meta-data ~meta-d)]
     (when (relevant-ns-type? (apply str (rest (str ns-type))))
       (if (not-empty meta-d)

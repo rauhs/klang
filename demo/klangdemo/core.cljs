@@ -88,9 +88,11 @@
         }
     (when @gen "Stop ") "generate Random data"]])
 
+
 (r/render [demo-ui gen] js/document.body)
 
 (demo!)
+
 
 (log! ::TRAC :may-wanna-click "on on this message" js/document.head)
 
@@ -106,6 +108,8 @@
 
 ;; This adds the enviornment to every log call
 (macros/add-form-env! true)
+;;(macros/add-trace! true)
+
 
 (macros/add-blacklist! "*/FATA")
 (macros/add-whitelist! "*/FATA")
@@ -113,7 +117,7 @@
 (macros/fata! :YOU_SHOULD_NOT_SEE_THIS)
 (macros/log! :FATA "this will still make it")
 (macros/add-blacklist! "*FATA")
-(macros/log! :FATA "this shoudl not be seen")
+(macros/log! :FATA "this should not be seen")
 
 (macros/add-blacklist! "one.bad.ns*")
 (macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
