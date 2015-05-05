@@ -220,10 +220,12 @@
   [lg-ev]
   (.group js/console
           (gstring/format ;; firefox can't deal with format style stuff
-           "%s%s%s -- %s"
+           "%s%s%s%s -- %s"
            (:ns lg-ev)
            (if (empty? (:ns lg-ev)) "" "/")
            (name (:type lg-ev))
+           ;; The line number if we have one:
+           (if-let [lnum (:line (:meta lg-ev))] (str ":" lnum) "")
            ;; We can't dered DB here to get the formatter
            ;; or reagent will re-render everything always
            (time-formatter (:time lg-ev))))
@@ -231,7 +233,7 @@
   ;; log call. It might also catch the local bindings so we print them here.
   (when-let [meta (:meta lg-ev)]
     (.group js/console "Meta Data")
-    (some->> (:line meta) (.log js/console "Line-num: %d"))
+    ;;(some->> (:line meta) (.log js/console "Line-num: %d"))
     (some->> (:file meta) (.log js/console "Filename: %s"))
     (when-let [env (seq (:env meta))]
       ;; 3rd level nested group. Oh yeah
