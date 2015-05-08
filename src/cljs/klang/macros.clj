@@ -145,10 +145,8 @@
   so. NOT WORKING."
   [m]
   (if *trace*
-    ;;(assoc m :trace `(js/console.trace))
     ;;(assoc m :trace `(try (goog.debug.Error.) (catch :default ~'err ~'err)))
-    ;;(assoc m :trace `(.getStacktrace goog.debug))
-    m
+    (assoc m :trace `(.getStacktrace goog.debug))
     m))
 
 (defn- log'

@@ -108,8 +108,8 @@
 
 ;; This adds the enviornment to every log call
 (macros/add-form-env! true)
-;;(macros/add-trace! true)
-
+;; Add a stacktrace to every log call. (uses goog.debug.getStacktrace)
+(macros/add-trace! true)
 
 (macros/add-blacklist! "*/FATA")
 (macros/add-whitelist! "*/FATA")
@@ -129,6 +129,14 @@
       this-is [:lots :of 'fun]]
   (macros/env! :I-can-dump-local)
   (macros/warn! :click "ME"))
+
+(defn ex-fn-for-stack []
+  (macros/log! ::TRAC "I should have some stacktraces in my meta data."))
+
+(defn ex-fn-for-stack-1 []
+  (ex-fn-for-stack))
+
+(ex-fn-for-stack-1)
 
 ;;(macros/env! :no-local-bindings ":(")
 
