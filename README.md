@@ -8,9 +8,10 @@ It allows for powerful (user defined) log filtering and syntax highlighting for
 clojure data structures:
 
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
+![Example](https://github.com/rauhs/klang/blob/master/docs/img/demo_console.png)
 
-
-[Demo][].
+# Demo
+Demo is here: [Demo][].
 
 # Features
 
