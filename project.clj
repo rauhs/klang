@@ -139,7 +139,7 @@
     :figwheel {:http-server-root "public" ;; But really resources/public
                ;;:nrepl-port 7888 ;; Not working
                ;;:repl false
-               :server-port 3449
+               :server-port 3450
                :css-dirs ["resources/public/css"]
                ;;:ring-handler klang.handler/app
                }
@@ -153,13 +153,13 @@
        :compiler {:main "klang.dev"
                   :source-map true}}}}}
 
-   :uberjar-exclusions [#"resources" #"demo" #"docs" #"env"]
-   :jar-exclusions     [#"resources" #"demo" #"docs" #"env"]
+   ;;:uberjar-exclusions [#"resources" #"demo" #"docs" #"env"]
+   ;;:jar-exclusions     [#"resources" #"demo" #"docs" #"env"]
    :uberjar
-   {;;:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
+   {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
     ;;:hooks [leiningen.cljsbuild]
     ;;:env {:production true}
-    ;;:aot :all
-    :resource-paths [];; no resources
+    :aot :all
+    ;;:resource-paths [];; no resources
     :omit-source false
     :source-paths ["src/cljs"]}})

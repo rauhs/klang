@@ -177,8 +177,6 @@
   (or (= c p) 
       (parent? p c)))
 
-(def random-uuid gstring/getRandomString)
-
 (defn time-formatter
   [time]
   (.format (goog.i18n.DateTimeFormat. "HH:mm:ss.SSS") time))

@@ -10,7 +10,7 @@
 (enable-console-print!)
 
 (figwheel/watch-and-reload
-  :websocket-url "ws://localhost:3449/figwheel-ws"
+  :websocket-url "ws://localhost:3450/figwheel-ws"
   :jsload-callback demo/figwheel-reload)
 
 (weasel/connect "ws://localhost:9001" :verbose true)
