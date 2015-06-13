@@ -25,3 +25,9 @@ demo :
 	cat ./resources/public/cljs/demo/app.js >> demo.html
 	echo "</script></body></html>" >> demo.html
 
+debug-jar :
+	rm -rf jar_extract
+	mkdir -p jar_extract
+	cp target/klang.jar jar_extract
+	cd jar_extract && jar xf klang.jar
+

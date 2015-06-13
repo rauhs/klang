@@ -5,22 +5,21 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :source-paths ["src/clj" "src/cljs"]
+  ;; What does this do?
+  :clojurescript? true
 
   :dependencies [;; CORE
-                 ;;[org.clojure/clojure "1.6.0"]
-                 [org.clojure/clojure "1.7.0-beta1"]
+                 [org.clojure/clojure "1.7.0-RC1" :scope "provided"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [org.clojure/clojurescript "0.0-3196" :scope "provided"]
+                 [org.clojure/clojurescript "0.0-3308" :classifier "aot" :scope "provided"]
                  ;; CLJS
                  ;;[cljsjs/react "0.13.1-0"]
                  ;;[reagent "0.5.0" :exclusions [cljsjs/react]]
                  [reagent "0.5.0"]
-                 [com.andrewmcveigh/cljs-time "0.3.3"]
-                 ;;[reagent-forms "0.4.9"]
-                 ;;[reagent-utils "0.1.4"];;cookies,crypt,validation,session
+                 ;;[com.andrewmcveigh/cljs-time "0.3.3"]
                  [cljsjs/highlight "8.4-0"] ;; for code highlighting
                  ;;[im.chit/purnam "0.5.1"];; js interop
-                 ];; forgive me
+                 ]
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [lein-environ "1.0.0"]
@@ -154,15 +153,13 @@
        :compiler {:main "klang.dev"
                   :source-map true}}}}}
 
+   :uberjar-exclusions [#"resources" #"demo" #"docs" #"env"]
+   :jar-exclusions     [#"resources" #"demo" #"docs" #"env"]
    :uberjar
-   {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
-    :env {:production true}
-    :aot :all
-    :omit-source true
-    :cljsbuild
-    {:jar true
-     :builds {:app
-              {:source-paths ["env/prod/cljs"]
-               :compiler
-               {:optimizations :advanced
-                :pretty-print false}}}}}})
+   {;;:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
+    ;;:hooks [leiningen.cljsbuild]
+    ;;:env {:production true}
+    ;;:aot :all
+    :resource-paths [];; no resources
+    :omit-source false
+    :source-paths ["src/cljs"]}})
