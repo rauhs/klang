@@ -58,7 +58,7 @@ Warning: I've never deployed to clojars.
 
 # Usage
 
-The following is the simplest usage:
+The following is the simplest usage, using no macros (see below for advanced usage):
 ```clj
 (ns your.app.somens
   (:require [klang.core :as k]))
@@ -129,8 +129,8 @@ Each log message *internally* has the following fields:
 
 * `:time` is a `goog.date.Date` instance. Either user supplied or filled when
   logged
-* `:ns` is a `string` holding the namespace where the log came from. User
-  supplied or the empty string "".
+* `:ns` is a `string` holding the namespace (typically the ns where the log
+  came from). User supplied or the empty string "".
 * `:type` is a `keyword` specifying the "type" of a log message. This can really
   be anything you want. But most people will use `:INFO`, `:ERRO` or `:WARN`
   and the like.
@@ -164,14 +164,17 @@ Hence, in production I want to log a subset of messages (such as warn/error/info
 but *not* trace/debug) to be pushed into a global core.async channel where I can
 send them to my server (or wherever) in case an error occurs.
 
-The `klang.macros` namespace offers a few additional features to the normal
-function calls:
+The `klang.macros` namespace offers a few macros which add additional features
+to the normal function calls:
 
-* Setup of whitelist and blacklist to elide specific log calls
-* Add line number and file name in your cljs file to every log call
-* Add local bindings of your log call
+* Setup of whitelist and blacklist (similar to timble) to elide specific log
+  calls. For instance: whitelist a namspace. Whitelist a specific `:type` of
+  logs (only `:FATAL`). This means you specify which log calls generate cljs
+  code.
+* Optionally add line number and file name in your cljs file to every log call
+* Optionally add local bindings that exist when you make a log call
 * Change the actual log function being called (for instance your own function
-  instead for production)
+  instead of klang for production)
 
 A quick code example:
 
