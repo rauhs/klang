@@ -1,11 +1,10 @@
 # Klang - A Clojurescript logging libary/viewer
 
-This library offers a simple logging interface in clojurescript for
-usage in the browser.
-Note: You can also use this to send your server logs to a browser window for
-easier inspection. So you backend folks might also be interested in this.
-It allows for powerful (user defined) log filtering and syntax highlighting for
-clojure data structures:
+Simple logging library for clojurescript.
+
+* Powerful inspection of logs by namespace and level during development.
+* Zero cljs code generated for production. Ie all your log calls are either elided
+  or call your own function in production.
 
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/demo_console.png)
@@ -52,13 +51,12 @@ The javascript console is not powerful enough, hence this library.
 
 # Clojars
 
-Warning: I've never deployed to clojars.
-
 [![Clojars Project](http://clojars.org/klang/latest-version.svg)](http://clojars.org/klang)
 
 # Usage
 
-The following is the simplest usage, using no macros (see below for advanced usage):
+The following is the simplest usage, using no macros (see below for advanced
+usage):
 ```clj
 (ns your.app.somens
   (:require [klang.core :as k]))
@@ -167,10 +165,10 @@ send them to my server (or wherever) in case an error occurs.
 The `klang.macros` namespace offers a few macros which add additional features
 to the normal function calls:
 
-* Setup of whitelist and blacklist (similar to timble) to elide specific log
+* Setup of whitelist and blacklist (similar to timbre) to elide specific log
   calls. For instance: whitelist a namspace. Whitelist a specific `:type` of
-  logs (only `:FATAL`). This means you specify which log calls generate cljs
-  code.
+  logs (only `:FATAL`). This means you specify which log macro calls generate
+  cljs function calls.
 * Optionally add line number and file name in your cljs file to every log call
 * Optionally add local bindings that exist when you make a log call
 * Change the actual log function being called (for instance your own function
@@ -187,13 +185,15 @@ A quick code example:
 ;; Most of the following macro calls emit ZERO code so these are just macros
 ;; that drive your compilation.
 
-;; By default this is setup:
+;; This is the default setup:
+;; It means we call `klang.core.log!` function when logging.
 (macros/logger! 'klang.core/log!)
 
-;; But you could also have your own log function being called:
+;; But for production you can change this to your own log function being
+;; called:
 (macros/logger! 'your.app.logging/send-to-server-on-error!)
 
-;; This adds the filename & line number of every log call:
+;; This adds the filename & line number to every log call:
 (macros/add-form-meta! :line :file)
 
 ;; This adds the environment (local bindings) to every log call
@@ -204,7 +204,7 @@ A quick code example:
 ;; the blacklist will win.
 (macros/default-emit! true)
 
-;; We then have a blacklist and a whitelist too:
+;; We have a blacklist and a whitelist collection:
 ;; This would elide all :*/DEBG messages
 (macros/add-blacklist! "*/DEBG")
 
@@ -229,10 +229,12 @@ A quick code example:
 
 ;; Whitelisting makes sense if the default emit is false:
 (macros/default-emit! false)
+;; For instance, for production, we only want to include `my.ns.*` namespace
+;; and only :ERRO and :FATA
 (macros/add-whitelist! "my.ns.*/(ERRO|FATA)")
 
-
-;; The following log functions exist:
+;; The following log macros exist by default but you can easily add your own
+;; logging levels. There is nothing specific about the keywords :INFO :ERRO etc.
 (macros/log! ::INFO :test-this)
 (macros/log! ::WHATEVER "you don't have to use :INFO etc...")
 (macros/trac! :some "log message")
@@ -243,7 +245,7 @@ A quick code example:
 (macros/crit! :some "log message")
 (macros/fata! :some "log message")
 
-;; A special one is the following:
+;; A special macro one is the following:
 (macros/env!)
 ;; It will "catch" the local binding (via &env in defmacro) and 
 ;; log it.
@@ -261,6 +263,8 @@ Note that if you called `add-form-env!` then you'll get the environment with
 every log call. It is not added to the message itself but instead is added as
 meta data to the log call. This meta data is invisible to the GUI. You can
 see it by clicking on a log message and checking your browser console.
+Check out the demo (see above) and click on some messages to see the data
+dumped in your browser's console.
 
 If this approch of Klang's macros is too inflexible to you then you can
 [head over to the wiki](https://github.com/rauhs/klang/wiki/Flexible-macros-recipe)

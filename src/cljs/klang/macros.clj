@@ -7,7 +7,7 @@
 
 ;; The function that is called for logging.
 (def ^:dynamic *logger* 'klang.core/log!)
-;; True if every macro call also attaches the environemtn (local bindings) to a
+;; True if every macro call also attaches the environment (local bindings) to a
 ;; log call.
 (def ^:dynamic *meta-env* false)
 ;; True if every macro call also attaches a console.trace
