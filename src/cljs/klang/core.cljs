@@ -939,7 +939,7 @@
   [db pred? which color]
   {:pre [(keyword? which) (or (= :ns which) (= :type which))]}
   (register-transducer!
-   db (keyword (random-uuid))
+   db (keyword (str (random-uuid)))
    (map
     (fn [msg]
       (if (pred? (which msg)) ;; pluck out :ns or :type
@@ -952,8 +952,8 @@
 
 (defn type->color!
   "Given a type keyword (like :INFO), render the type in color."
-  [db type color]
-  (pred->color! db (partial = type) :type color))
+  [db type-in color]
+  (pred->color! db (partial = type-in) :type color))
 
 (defn ns->color!
   "Gives the namespace ns a color."
@@ -1023,7 +1023,7 @@
   ;; error -> red etc
   ([] (default-config! *db*))
   ([db]
-   (color-types! db) ;; This errors and I don't know why
+   (color-types! db)
    (install-shortcut! db "l")
    (register-highlighter! db)
    (sensible-time-format db)
