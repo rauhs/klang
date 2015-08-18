@@ -19,6 +19,7 @@ clean :
 print-%: ; @echo $*=$($*)
 
 
+# Requires make prod
 demo :
 	echo "<html><head><title>Klang logging demo</title></head>" > demo.html
 	echo "<body><script>" >> demo.html

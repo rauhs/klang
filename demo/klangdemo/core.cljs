@@ -138,5 +138,11 @@
 
 (ex-fn-for-stack-1)
 
-;;(macros/env! :no-local-bindings ":(")
+(macros/env! :no-local-bindings-ex)
+
+(defn ex-fn-env [arg]
+  (let [x 0]
+    (macros/trac! "All bindings are there. Including the function itself. Click me.")))
+
+(ex-fn-env 3)
 

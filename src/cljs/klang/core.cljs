@@ -12,6 +12,7 @@
                             tap close! pub sub timeout take!]]
    ;; Google Closure
    [goog.dom :as dom]
+   [goog.debug] ;; For potential .getStacktrace
    [goog.string :as gstring]
    [goog.string.format] ;; Needs to be required to use goog.string/format
    [goog.style :as gstyle])

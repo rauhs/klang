@@ -34,6 +34,7 @@ Demo is here: [Demo][].
 * No global state, you *could* create multiple completely independent loggers
   and have mutliple overlays. For instance if somebody wanted to have one
   browser window to display the logs of the server and browser
+* Add stacktrace to every log call (optional)
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
@@ -179,7 +180,9 @@ A quick code example:
 ```clj
 (ns your.ns.core
   (:require-macros
-   [klang.macros :as macros]))
+   [klang.macros
+     :as klangm
+     :refer [log! debg! trac! info! warn! erro! crit! fata! env!]]))
 
 ;; NOTE:
 ;; Most of the following macro calls emit ZERO code so these are just macros
@@ -187,74 +190,79 @@ A quick code example:
 
 ;; This is the default setup:
 ;; It means we call `klang.core.log!` function when logging.
-(macros/logger! 'klang.core/log!)
+(klangm/logger! 'klang.core/log!)
 
 ;; But for production you can change this to your own log function being
 ;; called:
-(macros/logger! 'your.app.logging/send-to-server-on-error!)
+(klangm/logger! 'your.app.logging/send-to-server-on-error!)
 
 ;; This adds the filename & line number to every log call:
-(macros/add-form-meta! :line :file)
+(klangm/add-form-meta! :line :file)
 
 ;; This adds the environment (local bindings) to every log call
-(macros/add-form-env! true)
+(klangm/add-form-env! true)
 
 ;; Sets the default wheater to emit or elide a log call. This is only used when
 ;; neither the whitelist nor the blacklist matches anything. If both match then
 ;; the blacklist will win.
-(macros/default-emit! true)
+(klangm/default-emit! true)
 
 ;; We have a blacklist and a whitelist collection:
 ;; This would elide all :*/DEBG messages
-(macros/add-blacklist! "*/DEBG")
+(klangm/add-blacklist! "*/DEBG")
 
 ;; debg! is just like (log! ::DEBG ...)
 ;; This will not result in any code now:
-(macros/debg! :YOU_SHOULD_NOT_SEE_THIS)
+(debg! :YOU_SHOULD_NOT_SEE_THIS)
 
 ;; However non-namespaces keywords don't match the above, so this still calls
 ;; log:
-(macros/log! :DEBG "This will be logged")
+(log! :DEBG "This will be logged")
 
 ;; This can be achieved by the following:
-(macros/add-blacklist! "*DEBG")
+(klangm/add-blacklist! "*DEBG")
 ;; (not the above will be made into a regex (.*)DEBG$
 
 ;; We can also add namespaces to the blacklist:
-(macros/add-blacklist! "one.bad.ns*")
-(macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
+(klangm/add-blacklist! "one.bad.ns*")
+(log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
 
 ;; Since they're just regular expressions we can:
-(macros/add-blacklist! "my.ns.*/(DEBG|TRAC|INFO)")
+(klangm/add-blacklist! "my.ns.*/(DEBG|TRAC|INFO)")
 
 ;; Whitelisting makes sense if the default emit is false:
-(macros/default-emit! false)
+(klangm/default-emit! false)
 ;; For instance, for production, we only want to include `my.ns.*` namespace
 ;; and only :ERRO and :FATA
-(macros/add-whitelist! "my.ns.*/(ERRO|FATA)")
+(klangm/add-whitelist! "my.ns.*/(ERRO|FATA)")
 
 ;; The following log macros exist by default but you can easily add your own
 ;; logging levels. There is nothing specific about the keywords :INFO :ERRO etc.
-(macros/log! ::INFO :test-this)
-(macros/log! ::WHATEVER "you don't have to use :INFO etc...")
-(macros/trac! :some "log message")
-(macros/debg! :some "log message")
-(macros/info! :some "log message")
-(macros/warn! :some "log message")
-(macros/erro! :some "log message")
-(macros/crit! :some "log message")
-(macros/fata! :some "log message")
+(log! ::INFO :test-this)
+(log! ::WHATEVER "you don't have to use :INFO etc...")
+(trac! :some "log message")
+(debg! :some "log message")
+(info! :some "log message")
+(warn! :some "log message")
+(erro! :some "log message")
+(crit! :some "log message")
+(fata! :some "log message")
 
 ;; A special macro one is the following:
-(macros/env!)
+(env!)
 ;; It will "catch" the local binding (via &env in defmacro) and 
 ;; log it.
+
+;; You can also add a stacktrace to every log call.
+;; (uses goog.debug.getStacktrace)
+;; Again, this is only attached to the meta data and you get the trace when
+;; clicking a log function.
+(klangm/add-trace! true)
 
 ;; To see the effect you'd have to use it like this:
 (let [x :foo
       this-is [:lots :of 'fun]]
-  (macros/env! :I-can-dump-local))
-
+  (env! :I-can-dump-local))
 ```
 
 **More about env**:
