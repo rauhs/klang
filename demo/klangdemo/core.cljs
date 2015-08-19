@@ -1,4 +1,4 @@
-(ns ^:figwheel-always
+(ns;; ^:figwheel-always
   klangdemo.core
   (:require-macros
    [klang.macros :as macros]
@@ -6,6 +6,7 @@
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
                             tap close! pub sub timeout take!]]
+   [klangdemo.dep]
    [reagent.core :as r]
    [klang.core :refer [tab->type!  tab->ns!  tab->ns*!  *db* logger
                        ns*->color!  ns->color!  log!  raw-log!] :as k])

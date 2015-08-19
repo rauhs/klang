@@ -6,20 +6,20 @@
 ;; leiningen configuration.
 
 ;; The function that is called for logging.
-(def ^:dynamic *logger* 'klang.core/log!)
+(defonce ^:dynamic *logger* 'klang.core/log!)
 ;; True if every macro call also attaches the environment (local bindings) to a
 ;; log call.
-(def ^:dynamic *meta-env* false)
+(defonce ^:dynamic *meta-env* false)
 ;; True if every macro call also attaches a console.trace
-(def ^:dynamic *trace* false)
+(defonce ^:dynamic *trace* false)
 ;; Hold the keywords of which metadata of &form should be added to a log! call
-(def ^:dynamic *form-meta-keywords* #{})
+(defonce ^:dynamic *form-meta-keywords* #{})
 
 ;; Holds the 
-(def ^:dynamic *ns-type-whitelist* [])
-(def ^:dynamic *ns-type-blacklist* [])
+(defonce ^:dynamic *ns-type-whitelist* [])
+(defonce ^:dynamic *ns-type-blacklist* [])
 ;; If we get nil: What value to map it:
-(def ^:dynamic *ns-type-default* true)
+(defonce ^:dynamic *ns-type-default* true)
 
 (defmacro clear-vars!
   "Convenience function to use while REPLing and figwheel'ing."
