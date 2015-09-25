@@ -460,5 +460,5 @@ Copyright &copy; 2015 Andre Rauh. Distributed under the
 
 [Eclipse Public License]: <https://raw2.github.com/rauhs/klang/master/LICENSE>
 [Wiki Macros]: <https://github.com/rauhs/klang/wiki/Flexible-macros-recipe>
-[Demo]: <http://rauhs.github.io/klang/>
+[Demo]: <http://arauh.net/projects/klang/>
 
