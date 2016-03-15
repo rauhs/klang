@@ -898,14 +898,14 @@
    (.highlight js/hljs "clojure" msg true)))
 
 (defn msg->str
-  "Converts a message to a string. Also calls js->clj."
+  "Converts a message to a string."
   [msg]
-  (as-> (pr-str (js->clj msg)) s
+  (as-> (pr-str msg) s
     (.substr s 1 (- (.-length s) 2))))
 
 (defn register-highlighter!
   "Registeres a transducer :highlight-msg that highlights the :msg of
-  log. Uses js->clj to ensure the :msg is cojure.
+  log.
   TODO: We should highlight functions as javascript and not clojure!"
   [db]
   @inject-highlightjs-css
