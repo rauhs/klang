@@ -1,4 +1,4 @@
-(defproject klang "0.3.1"
+(defproject klang "0.5.0"
   :description "A cljs logger and viewer"
   :url "http://www.github.com/rauhs/klang"
   :license {:name "Eclipse Public License"
@@ -8,15 +8,9 @@
   ;; What does this do?
   :clojurescript? true
 
-  :dependencies [[org.clojure/clojure "1.7.0-RC1" :scope "provided"]
-                 [org.clojure/core.async "0.1.346.0-17112a-alpha"]
+  :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/clojurescript "0.0-3308" :classifier "aot" :scope "provided"]
-                 ;; CLJS
-                 ;;[cljsjs/react "0.13.1-0"]
-                 ;;[reagent "0.5.0" :exclusions [cljsjs/react]]
-                 [reagent "0.5.0"]
-                 [cljsjs/highlight "8.4-0"] ;; for code highlighting
-                 ]
+                 [cljsjs/highlight "8.4-0"]]
 
   :repositories [["clojars" {:sign-releases false}]]
   :plugins [[lein-cljsbuild "1.0.4"]
@@ -31,10 +25,6 @@
 
   :uberjar-name "klang.jar"
 
-  :main klang.server
-  
-  ;; Some speedup
-  ;; https://github.com/technomancy/leiningen/wiki/Faster
   :jvm-opts ["-Xverify:none"]
 
   :clean-targets ^{:protect false} ["resources/public/js"]

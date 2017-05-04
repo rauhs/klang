@@ -32,3 +32,6 @@ debug-jar :
 	cp target/klang.jar jar_extract
 	cd jar_extract && jar xf klang.jar
 
+deploy :
+	lein deploy clojars
+
