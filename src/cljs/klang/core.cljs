@@ -25,7 +25,7 @@
   (:import
     goog.ui.KeyboardShortcutHandler))
 
-(defonce db (atom {:showing? true
+(defonce db (atom {:showing? false
                    :max-logs 500
                    :search ""
                    :logs #js[]

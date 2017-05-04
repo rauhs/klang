@@ -1,12 +1,10 @@
-(defproject klang "0.5.1"
+(defproject klang "0.5.4"
   :description "A cljs logger and viewer"
   :url "http://www.github.com/rauhs/klang"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :source-paths ["src/clj" "src/cljs"]
-  ;; What does this do?
-  :clojurescript? true
+  :source-paths ["src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/clojurescript "0.0-3308" :classifier "aot" :scope "provided"]
@@ -62,83 +60,12 @@
                       :static-fns true ;; should be true by default
                       :optimizations :advanced
                       :pretty-print  false}}}}
-  :profiles
-  {:dev
-   {:repl-options {:init-ns klang.dev
-                   :nrepl-middleware
-                   [
-                    cider.nrepl.middleware.apropos/wrap-apropos
-                    cider.nrepl.middleware.classpath/wrap-classpath
-                    ;; Wrapcomplete will also start piggieback!
-                    ;; So we need to depend on it above but not include it
-                    cider.nrepl.middleware.complete/wrap-complete
-                    cider.nrepl.middleware.format/wrap-format
-                    cider.nrepl.middleware.info/wrap-info
-                    cider.nrepl.middleware.inspect/wrap-inspect
-                    cider.nrepl.middleware.macroexpand/wrap-macroexpand
-                    cider.nrepl.middleware.ns/wrap-ns
-                    cider.nrepl.middleware.pprint/wrap-pprint
-                    cider.nrepl.middleware.resource/wrap-resource
-                    cider.nrepl.middleware.stacktrace/wrap-stacktrace
-                    cider.nrepl.middleware.test/wrap-test
-                    cider.nrepl.middleware.trace/wrap-trace
-                    cider.nrepl.middleware.undef/wrap-undef
-                    ;;cemerick.piggieback/wrap-cljs-repl
-                    ]}}
 
-    :dependencies [[ring-mock "0.1.5"]
-                   [ring/ring-devel "1.3.2"]
-                   [cider/cider-nrepl "0.9.0-SNAPSHOT"]
-                   [org.clojure/tools.nrepl "0.2.10"]
-                   ;; Clojure
-                   [ring "1.3.2"]
-                   [ring/ring-defaults "0.1.4"]
-                   [prone "0.8.1"];;magnars/prone: Pretty ring exceptions
-                   [compojure "1.3.3"]
-                   [selmer "0.8.2"];;Django inspired templates
-                   [environ "1.0.0"];;Environment variables
-                   [leiningen "2.5.1"]
-                   [figwheel "0.2.6"]
-                   ;;[figwheel-sidecar "0.2.5"]
-                   ;;[cljs-tooling "0.1.5-SNAPSHOT"] ;; Cljs autocomplete
-                   [weasel "0.6.0"]
-                   ;;[com.cemerick/piggieback "0.2.1-SNAPSHOT"]
-                   [com.cemerick/piggieback "0.1.6-SNAPSHOT"]
-                   [pjstadig/humane-test-output "0.7.0"]]
-
-    ;; All the clojure containing files. Note we also need to add cljs since it
-    ;; contains some debugging macros for cljs (but CLJS has macros only through
-    ;; clojure)
-    :source-paths ["env/dev/clj" "env/dev/cljs" "demo"]
-    :plugins [[lein-figwheel "0.2.6"]]
-
-    :injections [(require 'pjstadig.humane-test-output)
-                 (pjstadig.humane-test-output/activate!)]
-
-    :figwheel {:http-server-root "public" ;; But really resources/public
-               ;;:nrepl-port 7888 ;; Not working
-               ;;:repl false
-               :server-port 3450
-               :css-dirs ["resources/public/css"]
-               ;;:ring-handler klang.handler/app
-               }
-
-    :env {:dev? true}
-
-    :cljsbuild
-    {:builds
-     {:app
-      {:source-paths ["env/dev/cljs" "demo"]
-       :compiler {:main "klang.dev"
-                  :source-map true}}}}}
-
-   ;;:uberjar-exclusions [#"resources" #"demo" #"docs" #"env"]
-   :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main"]
-   :uberjar
-   {:hooks [leiningen.cljsbuild]
-    ;;:hooks [leiningen.cljsbuild]
-    ;;:env {:production true}
-    :aot :all
-    ;;:resource-paths [];; no resources
-    :omit-source false
-    :source-paths ["src/cljs"]})
+   :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main" #"\.swp" #"templates"]
+   :uberjar {:hooks [leiningen.cljsbuild]
+             ;;:hooks [leiningen.cljsbuild]
+             ;;:env {:production true}
+             :aot :all
+             ;;:resource-paths [];; no resources
+             :omit-source false
+             :source-paths ["src/cljs"]})
