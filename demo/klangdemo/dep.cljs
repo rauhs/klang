@@ -1,9 +1,7 @@
 (ns ^:figwheel-always
   klangdemo.dep
   (:require-macros
-   [klang.macros
-    :as macros
-    :refer [trac!]]))
+   [klang.core :as macros :refer [trac!]]))
 
 (trac! :loading)
 

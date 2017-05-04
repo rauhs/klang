@@ -1,7 +1,7 @@
 (ns;; ^:figwheel-always
   klangdemo.core
   (:require-macros
-   [klang.macros :as macros]
+   [klang.core :as macros]
    [cljs.core.async.macros :refer [go-loop go]])
   (:require
    [cljs.core.async :refer [put! chan sliding-buffer <! mult
@@ -120,7 +120,6 @@
 (macros/add-blacklist! "*FATA")
 (macros/log! :FATA "this should not be seen")
 
-(macros/add-blacklist! "one.bad.ns*")
 (macros/log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
 
 (macros/log! ::INFO :test-macro)

@@ -2,39 +2,24 @@
 
 Simple logging library for clojurescript.
 
-* Powerful inspection of logs by namespace and level during development.
-* Zero cljs code generated for production. Ie all your log calls are either elided
-  or call your own function in production.
-
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/example.png)
 ![Example](https://github.com/rauhs/klang/blob/master/docs/img/demo_console.png)
 
 # Demo
-Demo is here: [Demo][].
+(Old) Demo is here: [Demo][].
 
 # Features
 
 * Central hub to push all log messages in your client app
-* Define multiple tabs that filter only the messages that you're interested in
-  with transducers (allows things like: "wait for event X, then show the next
-  10 events")
 * **Zero overhead and removal of all log function calls for production by eliding
   all calls with macros. No Klang code goes into your app.**
-* Enter a search term to quickly find log messages (Spaces will map to `.*`, so
-  similar to Emacs fuzzy search)
+* Enter a search term to quickly find log messages
 * Pausing the UI in case of many logs arriving. This will not discard
   the logs but buffer them.
-* **Customize rendering** of any log data (attach render function to any log
-  message that emits hiccup)
-* Clone existing tabs to quickly apply different search terms
-* Logging is asynchronous so you don't have to worry about blocking
 * Click on any log message and dump the object to your javascript console (as an
   object). This allows you to inspect the object and even log functions and
   invoke them in your javascript console. See the demo.
-* No global state, you *could* create multiple completely independent loggers
-  and have mutliple overlays. For instance if somebody wanted to have one
-  browser window to display the logs of the server and browser
-* Add stacktrace to every log call (optional)
+  Also works great with [Devtools](https://github.com/binaryage/cljs-devtools)
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
@@ -47,7 +32,7 @@ system harder.
 One very simple and effective way to cope (or rather: "help") with understanding
 behavior is extensive logging from the start of the development.
 This projects the concurrent nature of the control flow into a single, easy to
-understand and linear trace of events.
+understand linear trace of events.
 The javascript console is not powerful enough, hence this library.
 
 # Clojars
@@ -60,393 +45,104 @@ The following is the simplest usage, using no macros (see below for advanced
 usage):
 ```clj
 (ns your.app.somens
-  (:require [klang.core :as k]))
+  (:require [klang.core :refer-macros [info! warn! erro! crit! fata! trac!]]))
 
-;; We could potentially use multiple independent loggers. Single mode
-;; puts everthing in a local *db*
-(k/init-single-mode!)
-(k/init!)
-;; Setups reasonable default colors for :INFO etc
-(k/default-config!)
-
-;; Define a logger that always logs as ::INFO
-;; Note how we abuse namespaced keywords here to get more detailed logging
-;; information than just :INFO
-(def lg (k/logger ::INFO))
-
-;; Now call the ::INFO logger with whatever parameters you like
-(lg :db-init "Db initiaized" 'another-arbitrary-param)
-(lg :validation :ok {:user userid})
-;; A timestamp will be automatically added.
-
-;; Or without the indirection of k/logger:
-(k/log! ::WARN "User failed to in")
-
-;; Or the low level raw log:
-;; Can be useful if we get log message externally from a server.
-(k/raw-log! {:time (goog.date.DateTime.)
-             :type :INFO
-             :ns "whatever.ns.you.like" ;; Doesn't have to exist
-             :msg [:one :two "foo"]})
-
-;; Show the logs in an div overlay:
+;; Show/hide the logs:
 (k/show!)
-;; Or just press `l` if you applied (default-config!)
-
-(k/hide!) ;; hide it again.
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Note we can also create some tabs which hold only certain events:
-
-;; Setup some new tabs (left menu)
-;; Only hold events from one namespace
-(k/tab->ns! k/*db* :my-tab-name "my.ns" "some.other.ns")
-;; Only hold events from ns and it's children
-;; so here: my.ns.* and other.ns.*
-(k/tab->ns*! k/*db* :my-ns* "my.ns" "other.ns")
-;; Or only hold certain types. Yes same tab name as tab->ns! call:
-(k/tab->type! k/*db* :my-tab-name :INFO :WARN)
-
+;; Or just press they `m` key
 ```
-
-There is nothing special about `::INFO`, you can use any arbitrary keyword.
-The `default-config!` sets up some default color rendering and also
-registers the keyboard shortcut `l` to view/hide the logs.
-See the source code of `default-config!`, it only calls a handful of functions.
-If you want to change --for instance-- the key shortcut you can just grab the
-code and change it.
-
-There is also many ways you can customize the rendering yourself. See
-the section below for more details on this.
 
 Note that if you use this in production facing code then you'll want
 to use this library somewhat differently in order to elide any logging
 for production (see below).
 
-# Log message layout
-Each log message *internally* has the following fields:
-
-* `:time` is a `goog.date.Date` instance. Either user supplied or filled when
-  logged
-* `:ns` is a `string` holding the namespace (typically the ns where the log
-  came from). User supplied or the empty string "".
-* `:type` is a `keyword` specifying the "type" of a log message. This can really
-  be anything you want. But most people will use `:INFO`, `:ERRO` or `:WARN`
-  and the like.
-* `:msg` the actual log message. Is always a vector, even if a single item. This
-  allows for arbitrary parameters passed to the various logging functions.
-  The default renderer always calls `js->clj` on the message
-* `:uuid` is a UUID that the log message is identified with.
-
-The only required fields are `:msg` and `:type`, all others can be omitted.
-The `:time` defaults to the current time when the message is added.
-
-# Use cases
-The library can be used for different use cases which are described in the
-following sections:
-
-## Web browser app development
-This is likely the most common use case. You're developing a Clojurescript app
-for the browser. You want powerful logging. Simply require the library and call
-the API functions to log.
-
-### With deployment to clients
+# Production eliding of log calls
 In most use cases for web app development you'll want to remove logging data and
 the overhead of Klang from your JS code for deployment.
-In this case you should use the macros of klang which introduce a level of
-indirection that allows you to elide whatever logs you don't want to make it
-into function calls.
+For this you have to do two things:
 
-Personally, I wouldn't even want any Klang code to stay in a production app
-since the logging code of Klang isn't too small.
-Hence, in production I want to log a subset of messages (such as warn/error/info
-but *not* trace/debug) to be pushed into a global core.async channel where I can
-send them to my server (or wherever) in case an error occurs.
+1. Configure Klang to elide log calls you don't want.
+2. Create your own CLJS function that get's called for the severe errors/warnings.
+   There you can log them or send them to the server etc.
 
-The `klang.macros` namespace offers a few macros which add additional features
-to the normal function calls:
+Klang offers:
 
 * Setup of whitelist and blacklist (similar to timbre) to elide specific log
   calls. For instance: whitelist a namspace. Whitelist a specific `:type` of
   logs (only `:FATAL`). This means you specify which log macro calls generate
   cljs function calls.
 * Optionally add line number and file name in your cljs file to every log call
-* Optionally add local bindings that exist when you make a log call
+* Optionally add local bindings that exist when you make a log call (by default
+  enabled)
 * Change the actual log function being called (for instance your own function
   instead of klang for production)
 
-A quick code example:
+## Ways to configure
+
+Klang gets configures by a single map. The default map is the following:
 
 ```clj
-(ns your.ns.core
-  (:require-macros
-   [klang.macros
-     :as klangm
-     :refer [log! debg! trac! info! warn! erro! crit! fata! env!]]))
-
-;; NOTE:
-;; Most of the following macro calls emit ZERO code so these are just macros
-;; that drive your compilation.
-
-;; This is the default setup:
-;; It means we call `klang.core.log!` function when logging.
-(klangm/logger! 'klang.core/log!)
-
-;; But for production you can change this to your own log function being
-;; called:
-(klangm/logger! 'your.app.logging/send-to-server-on-error!)
-
-;; This adds the filename & line number to every log call:
-(klangm/add-form-meta! :line :file)
-
-;; This adds the environment (local bindings) to every log call
-(klangm/add-form-env! true)
-
-;; Sets the default wheater to emit or elide a log call. This is only used when
-;; neither the whitelist nor the blacklist matches anything. If both match then
-;; the blacklist will win.
-(klangm/default-emit! true)
-
-;; We have a blacklist and a whitelist collection:
-;; This would elide all :*/DEBG messages
-(klangm/add-blacklist! "*/DEBG")
-
-;; debg! is just like (log! ::DEBG ...)
-;; This will not result in any code now:
-(debg! :YOU_SHOULD_NOT_SEE_THIS)
-
-;; However non-namespaces keywords don't match the above, so this still calls
-;; log:
-(log! :DEBG "This will be logged")
-
-;; This can be achieved by the following:
-(klangm/add-blacklist! "*DEBG")
-;; (not the above will be made into a regex (.*)DEBG$
-
-;; We can also add namespaces to the blacklist:
-(klangm/add-blacklist! "one.bad.ns*")
-(log! :one.bad.ns/INFO :YOU_SHOULD_NOT_SEE_THIS)
-
-;; Since they're just regular expressions we can:
-(klangm/add-blacklist! "my.ns.*/(DEBG|TRAC|INFO)")
-
-;; Whitelisting makes sense if the default emit is false:
-(klangm/default-emit! false)
-;; For instance, for production, we only want to include `my.ns.*` namespace
-;; and only :ERRO and :FATA
-(klangm/add-whitelist! "my.ns.*/(ERRO|FATA)")
-
-;; The following log macros exist by default but you can easily add your own
-;; logging levels. There is nothing specific about the keywords :INFO :ERRO etc.
-(log! ::INFO :test-this)
-(log! ::WHATEVER "you don't have to use :INFO etc...")
-(trac! :some "log message")
-(debg! :some "log message")
-(info! :some "log message")
-(warn! :some "log message")
-(erro! :some "log message")
-(crit! :some "log message")
-(fata! :some "log message")
-
-;; A special macro one is the following:
-(env!)
-;; It will "catch" the local binding (via &env in defmacro) and 
-;; log it.
-
-;; You can also add a stacktrace to every log call.
-;; (uses goog.debug.getStacktrace)
-;; Again, this is only attached to the meta data and you get the trace when
-;; clicking a log function.
-(klangm/add-trace! true)
-
-;; To see the effect you'd have to use it like this:
-(let [x :foo
-      this-is [:lots :of 'fun]]
-  (env! :I-can-dump-local))
+{:logger-fn 'klang.core/log!
+;; Hold the keywords of which metadata of &form should be added to a log! call
+;; Usually :file & :line are available
+:form-meta #{}
+;; Allow shortening namespaces:
+:compact-ns? false
+;; True if every macro call also attaches the environment (local bindings) to a
+;; log call.
+:meta-env? true
+:default-emit? true
+:whitelist ""
+:blacklist ""}
 ```
 
-**More about env**:
-
-Note that if you called `add-form-env!` then you'll get the environment with
-every log call. It is not added to the message itself but instead is added as
-meta data to the log call. This meta data is invisible to the GUI. You can
-see it by clicking on a log message and checking your browser console.
-Check out the demo (see above) and click on some messages to see the data
-dumped in your browser's console.
-
-If this approch of Klang's macros is too inflexible to you then you can
-[head over to the wiki](https://github.com/rauhs/klang/wiki/Flexible-macros-recipe)
-where an approach with transducers is shown.
-
-**Note**: The macros are completely optional and the library itself does not use
-  any of them. So you can always just use the normal function call.
-
-## Server mode
-In this use case you're only interested in viewing logs in a browser window but
-the browser window itself does not host a client app that is interested in
-logging.
-
-For instance, you're forwarding all your logs from your clojure
-backend app to Klang. You may also have multiple backends or even your
-browser app to also forward the logging to one klang instance.
-
-This mean that you'll have a central location (the browser app running
-klang) where you display your client and server-side logging data in
-realtime.
-
-* TODO: Add recipe to receive logs over websocket and push them in with `raw-log!`
-
-### Timbre
-For instance writing a custom appender in timbre (TODO) could push the log
-messages to a browser window and then displaying them with Klang. The times of
-your log message wouldn't be touched since you can supply a date/time with
-`raw-log!`.
-
-* TODO: Code a timbre appender that also sends the log messages to a websocket
-  for displaying with Klang.
-
-# Customizing
-In general Klang allows for a lot of customization. In fact, most of fanzy
-coloring you see in the above screenshot is added by the standard API. It's not
-baked in. The default renderes wouldn't even render the DateTime of a log
-message in a decent format. 
-
-I encourage people to check out the source of `klang/core.cljs`, right at the
-end of the file you'll find a comment `functionality through the standard API`.
-
-## Renderers for logs
-In the above section I talked about the log message layout (`:ns, :time, :type,
-:msg`) but that was only half the truth.
-The renderer (reagent) also looks for `[:render :type], [:render :ns] ...`.
-Check out the function `render-msg`.
-
-These renderers will be `comp` and called. You may choose to supply your own
-render instead of the syntax highlighting one.
-You can also change the DateTime layout and coloring.
-Some convenience functions are supplied to make it easy to color types,
-namespaces etc.
-
-## Tabs
-The example code above already defined some code that showed off defining custom
-tabs.
-You're not limited to filter by `:type` and `:ns` however, you can register
-arbitrary transducers for a tab.
-This allows you to filter and even modify the log messages.
-See the function `tab->transducer!`.
-You can find an example of how to use that function in the source code of this
-library.
-In fact, `tab->type!` and `tab->ns!` are implemented using `tab->transducer!`.
-
-## Message rendering
-By default the messages get transformed with `js->clj` function and then get
-syntax highlighted by highlight-js.
-You can change this by not applying the default-config 
-
-You can find an example of how to use that function in the source code of this
-library.
-
-You can change the types colore like so:
+You can change the behaviour of the macroexpansion of Klang by configuring it in
+various ways.  All involve setting a Java system property.
+Which you can set in leiningen like so:
 
 ```clj
-(type->color! db :TRAC "lightblue")
+{:jvm-opts ["-Dklang.config-file=klang-prod.edn"]}
 ```
 
-You can change the color of namespaces with the `ns->` functions:
-```clj
-(ns*->color! db "my.ns" "red") ;; my.ns.*
-(ns->color! db "my.other" "blue") ;; my.other only, no child NS
-```
+1. Set  `klang.config-file=klang-prod.edn`. It should be on the classpath since
+   the file will be called with `io/resource`
+2. Set the Java defines:
 
-In general you can map a predicate to a color, in fact the above function are
-implemented with this function:
-```clj
-(defn type->color!
-  "Given a type keyword (like :INFO), render the type in color."
-  [db type color]
-  (pred->color! db (partial = type) :type color))
-```
+   - `klang.logger-fn=klang.core/log!`
+   - `klang.form-meta=\"[:line :file]\"`
+   - `klang.compact-ns=false`
+   - `klang.meta-env=false`
+   - `klang.default-emit=true`
+   - `klang.whitelist=\"(ERRO|FATA|WARN)\"`
+   - `klang.blaclist=\"TRAC\"`
 
-## Pit falls
-Since HTML is XML is nested. You have to watch out when you attach multiple
-renderer. The second render will receive the previous render result and you'll
-have to deal with hiccup data. I'm not sure if there is a way to elegantly
-solve this.
-Watch out if you get an error saying something about some hiccup data like
-`[:span ...]`.
+The options are all `read-string`ed except the whitelist and blacklist.
 
-A solution is to keep the maximum number of renderer that act on a field of the
-log message to one.
+The options mean:
 
-This can be achieved by de-normalizing the renderers and attach fewer but more
-powerful renderers to the log messages.
-You can always just attach exactly once rather complicated renderer instead of
-multiple small ones.
+`logger-fn`: This the CLJS function that gets called for the log calls. The
+macro emit the proper call (or not if it's elided). 
+The arguments of the `logger-fn` are:
 
-Another strategy is to apply your custom fancy renderer to only a tab (as a
-`map` transducer) and leave the *normal* tabs render it normally.
+1. `ns`, the namespace string
+2. `severity`, the serverity as a string (like `"INFO"`, `"WARN"`)
+3. `& args`, the rest of the message.
 
-## Listening for logs
-Every log is pushed on a `mult` channel (see core.async docs) which you can tap
-into. The channel is in `:log-pub-ch` of the `db` atom.
-This allows you to also forward the logs to other places (localStorage or a
-server).
+`form-meta`: Can be set to `#{:file, :line}` to include file and line location
+of the log call.
 
-## Reacting to klang actions
-Most actions are pushed on an the action channel `actions-pub-ch` in the `db`
-atom. Which again, is a `mult`.
-You can `tap` into it and react however you like.
-Events include showing/hiding the log overlay, new log, freezing the channel etc
-etc.
+`:compact-ns?`: If true the namespace will be shortend. `Foo.Barr.Bazzz.Wuzz`
+will be `F.B.B.W`. Useful for production builds.
 
-## Increasing freeze buffer
-If you freeze the UI (aka "pause") you'll fill up a `core.async` sliding
-buffer. This means you will lose log messages eventually unless you thaw the
-UI.
-The current log buffer is 1000 messages but you may increase it by manually
-`swap!`ing the db field `:freeze-buffer`
+`:meta-env?`: If true will include the local bindings in a map as the first
+argument to the log function. These bindings can be inspected by clicking on
+the log message in the overlay.
 
-# Suggested log types
-I'll suggest those log types in order to have same string lengths (similar to
-supervisord):
+`:default-emit?`: If neither whitelist nor blacklist kicks in, then this
+decides if the log call should be emitted.
 
-* `:TRAC` -- trace, use it if you dump vars
-* `:DEBG` -- debug, very fine grained. Low level
-* `:INFO` -- Default logging for all other
-* `:WARN` -- Something isn't pretty but the app is ok
-* `:ERRO` -- We have an error but we can continue with program execution.
-* `:CRIT` -- critical, cannot continue normal program execution but the code
-             itself is fine.
-* `:FATA` -- fatal, We cannot continue with execution. Code needs fixing.
-
-# TODO
-
-* Improve performance by only rendering the subset of log messages that are seen
-  for the current scrolling position.
-* Run the tab transducers as xform argument in core.async channel. This would
-  allow an easy profiling transducer. The `single-transduce` silliness prevents
-  this from working.
-* Go through the `TODO:` items in `klang/core.cljs`
-* We should probably cut off ridicioulsy long messages and just allow the user
-  to click on it to dump the object to the console.
-* We should dump all meta information of the log message when user clicks on it.
-  But not display it in the UI. This would allow for compact yet rich messages.
-  Macros should attach line number and filename to the meta ifno.
-* Clicking on the time of a log message should go to the `:all` tab and show
-  the message in the context of all log messages. Prereq: Performance with
-  partial rendering.
-
-## Ideas
-
-We can render some common data structures in an arbitrary way. If you have an
-idea, feel free to submit a pull request. We can always just leave it in the
-source for others to use (but not used by the default renderer).
-For instance: How to render large data structures? Popup? How to render
-structs?
-
-Offer a standalone HTML file that includes all the code, css etc of klang and
-that can be started with something simple like pythons SimpleHTTPServer.
-The have that listen on a few websocket connections where clients (another
-browser window or server) can connect to and push logs.
+`:whitelist`/`:blacklist`: A regular expression that can whitelist/blacklist
+log calls. It gets matched to a string of: `the-namespace/the-severity`.
 
 # Why "Klang"?
 Timbre, the de-facto clojure logging library has do with sound.
