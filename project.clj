@@ -1,4 +1,4 @@
-(defproject klang "0.2.0-SNAPSHOT"
+(defproject klang "0.3.1"
   :description "A cljs logger and viewer"
   :url "http://www.github.com/rauhs/klang"
   :license {:name "Eclipse Public License"
@@ -8,30 +8,24 @@
   ;; What does this do?
   :clojurescript? true
 
-  :dependencies [;; CORE
-                 [org.clojure/clojure "1.7.0-RC1" :scope "provided"]
+  :dependencies [[org.clojure/clojure "1.7.0-RC1" :scope "provided"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [org.clojure/clojurescript "0.0-3308" :classifier "aot" :scope "provided"]
                  ;; CLJS
                  ;;[cljsjs/react "0.13.1-0"]
                  ;;[reagent "0.5.0" :exclusions [cljsjs/react]]
                  [reagent "0.5.0"]
-                 ;;[com.andrewmcveigh/cljs-time "0.3.3"]
                  [cljsjs/highlight "8.4-0"] ;; for code highlighting
-                 ;;[im.chit/purnam "0.5.1"];; js interop
                  ]
 
+  :repositories [["clojars" {:sign-releases false}]]
   :plugins [[lein-cljsbuild "1.0.4"]
             [lein-environ "1.0.0"]
-            [lein-ring "0.9.1"]
-            [lein-asset-minifier "0.2.2"]]
+            [lein-ring "0.9.1"]]
   
   ;; Global exclusions are applied across the board, as an alternative
   ;; to duplication for multiple dependencies with the same excluded libraries.
   :exclusions [org.clojure/tools.nrepl]
-
-  ;;:ring {:handler klang.handler/app
-         ;;:uberwar-name "klang.war"}
 
   :min-lein-version "2.5.0"
 
@@ -44,11 +38,6 @@
   :jvm-opts ["-Xverify:none"]
 
   :clean-targets ^{:protect false} ["resources/public/js"]
-
-  :minify-assets
-  {:assets
-   {"resources/public/css/site.min.css"
-    "resources/public/css/site.css"}}
 
   :cljsbuild
   {:builds
@@ -105,7 +94,7 @@
                     cider.nrepl.middleware.trace/wrap-trace
                     cider.nrepl.middleware.undef/wrap-undef
                     ;;cemerick.piggieback/wrap-cljs-repl
-                    ]}
+                    ]}}
 
     :dependencies [[ring-mock "0.1.5"]
                    [ring/ring-devel "1.3.2"]
@@ -154,12 +143,12 @@
                   :source-map true}}}}}
 
    ;;:uberjar-exclusions [#"resources" #"demo" #"docs" #"env"]
-   ;;:jar-exclusions     [#"resources" #"demo" #"docs" #"env"]
+   :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main"]
    :uberjar
-   {:hooks [leiningen.cljsbuild minify-assets.plugin/hooks]
+   {:hooks [leiningen.cljsbuild]
     ;;:hooks [leiningen.cljsbuild]
     ;;:env {:production true}
     :aot :all
     ;;:resource-paths [];; no resources
     :omit-source false
-    :source-paths ["src/cljs"]}})
+    :source-paths ["src/cljs"]})
