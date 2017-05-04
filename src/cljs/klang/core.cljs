@@ -453,7 +453,7 @@
     (let [logs (:logs db)]
       (.splice logs 0 (- (alength logs) num)))))
 
-(defn log!
+(defn add-log!
   "This is the main log functions:
   - ns - string
   - severity - string, like \"INFO\" or \"WARN\"

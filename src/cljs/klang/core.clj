@@ -14,7 +14,7 @@
    - klang.trace=false
    - klang.default-emit=true
    - klang.whitelist=\"(ERRO|FATA|WARN)\"
-   - klang.blaclist=\"TRAC\"
+   - klang.blacklist=\"TRAC\"
 
    3. Config file:
    - klang.config-file=klang-prod.edn"
@@ -23,7 +23,7 @@
 
 
 (defonce config
-         (atom {:logger-fn 'klang.core/log!
+         (atom {:logger-fn 'klang.core/add-log!
                 ;; Hold the keywords of which metadata of &form should be added to a log! call
                 ;; Usually :file & :line are available
                 :form-meta #{}
