@@ -1,4 +1,4 @@
-(defproject klang "0.5.0"
+(defproject klang "0.5.1"
   :description "A cljs logger and viewer"
   :url "http://www.github.com/rauhs/klang"
   :license {:name "Eclipse Public License"
