@@ -109,9 +109,10 @@ Which you can set in leiningen like so:
 2. Set the Java defines:
 
    - `klang.logger-fn=klang.core/log!`
-   - `klang.form-meta=\"[:line :file]\"`
+   - `klang.form-meta=\"#{:line :file}\"`
    - `klang.compact-ns=false`
    - `klang.meta-env=false`
+   - `klang.trace=false`
    - `klang.default-emit=true`
    - `klang.whitelist=\"(ERRO|FATA|WARN)\"`
    - `klang.blaclist=\"TRAC\"`
@@ -120,7 +121,7 @@ The options are all `read-string`ed except the whitelist and blacklist.
 
 The options mean:
 
-`logger-fn`: This the CLJS function that gets called for the log calls. The
+`:logger-fn`: A symbol. This the CLJS function that gets called for the log calls. The
 macro emit the proper call (or not if it's elided). 
 The arguments of the `logger-fn` are:
 
@@ -128,29 +129,28 @@ The arguments of the `logger-fn` are:
 2. `severity`, the serverity as a string (like `"INFO"`, `"WARN"`)
 3. `& args`, the rest of the message.
 
-`form-meta`: Can be set to `#{:file, :line}` to include file and line location
+- `:form-meta`: A set. Can be set to `#{:file, :line}` to include file and line location
 of the log call.
 
-`:compact-ns?`: If true the namespace will be shortend. `Foo.Barr.Bazzz.Wuzz`
+- `:trace`: If true, will include the stacktrace in the meta data of every log call.
+You can then click on it in the JS console and jump to the sources of the stacktrace.
+
+- `:compact-ns?`: If true the namespace will be shortend. `Foo.Barr.Bazzz.Wuzz`
 will be `F.B.B.W`. Useful for production builds.
 
-`:meta-env?`: If true will include the local bindings in a map as the first
+- `:meta-env?`: If true will include the local bindings in a map as the first
 argument to the log function. These bindings can be inspected by clicking on
 the log message in the overlay.
 
-`:default-emit?`: If neither whitelist nor blacklist kicks in, then this
+- `:default-emit?`: If neither whitelist nor blacklist kicks in, then this
 decides if the log call should be emitted.
 
-`:whitelist`/`:blacklist`: A regular expression that can whitelist/blacklist
-log calls. It gets matched to a string of: `the-namespace/the-severity`.
-
-# Why "Klang"?
-Timbre, the de-facto clojure logging library has do with sound.
-*Klang* is the German word for *tone/sound*.
+- `:whitelist`/`:blacklist`: A regular expression that can whitelist/blacklist
+log calls. It gets matched to the string: `the-namespace/the-severity`.
 
 ## License
 
-Copyright &copy; 2015 Andre Rauh. Distributed under the
+Copyright &copy; 2015-2017 Andre Rauh. Distributed under the
 [Eclipse Public License][], the same as Clojure.
 
 
