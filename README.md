@@ -47,9 +47,13 @@ usage):
 (ns your.app.somens
   (:require [klang.core :refer-macros [info! warn! erro! crit! fata! trac!]]))
 
-;; Show/hide the logs:
+;; You can pass any arguments to the log macros:
+
+(info! "Sending transit request" {:url "foo"})
+(erro! "Failed to connect" {:reason http-status})
+
+;; To show/hide the logs just press the `m` key OR:
 (k/show!)
-;; Or just press they `m` key
 ```
 
 Note that if you use this in production facing code then you'll want
