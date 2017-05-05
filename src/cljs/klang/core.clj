@@ -27,13 +27,11 @@
                 ;; Hold the keywords of which metadata of &form should be added to a log! call
                 ;; Usually :file & :line are available
                 :form-meta #{}
-                ;; Allow shortening namespaces:
                 :compact-ns? false
                 ;; True if every macro call also attaches the environment (local bindings) to a
                 ;; log call.
                 :meta-env? true
-                ;; True if every macro call also attaches a console.trace
-                :trace? false
+                :trace? true
                 :default-emit? true
                 :whitelist ""
                 :blacklist ""}))
@@ -141,8 +139,7 @@
   so. NOT WORKING."
   [m]
   (if (:trace? @config)
-    #_(assoc m :trace `(try (goog.debug.Error.) (catch :default ~'err ~'err)))
-    (assoc m :trace `(goog.debug.getStacktrace))
+    (assoc m :trace `(try (throw (js/Error.)) (catch :default e# e#)))
     m))
 
 (defn shorten-dotted

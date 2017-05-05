@@ -1,5 +1,10 @@
-# 0.5
 
+# 0.5.5
+
+- Trace now works properly. Will jump to the CLJS source-mapped files. 
+  Enabled by default now.
+
+# 0.5
 - Big rewrite. Core API like `info!` etc all stayed compatible.
 - Got rid of mutations inside the CLJ macros. Very bad idea.
   Configuration is now done by Java system properties or EDN files

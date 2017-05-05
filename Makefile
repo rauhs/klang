@@ -12,10 +12,14 @@ clean :
 
 print-%: ; @echo $*=$($*)
 
+demo-js:
+	lein cljsbuild auto demo
 
-# Requires make prod
+# Requires make demo-js
 demo :
 	echo "<html><head><title>Klang logging demo</title></head>" > demo.html
+	echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react.min.js\"></script>" >> demo.html
+	echo "<script src=\"https://cdnjs.cloudflare.com/ajax/libs/react/15.5.4/react-dom.min.js\"></script>" >> demo.html
 	echo "<body><script>" >> demo.html
 	cat ./resources/public/cljs/demo/app.js >> demo.html
 	echo "</script></body></html>" >> demo.html

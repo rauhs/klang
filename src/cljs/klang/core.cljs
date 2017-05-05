@@ -1,6 +1,5 @@
 (ns klang.core
   "
-
    # TODO:
    Also highlight all namespaces with a smart method?
    For instance all parents vs childs have stronger colors...
@@ -178,8 +177,7 @@
       (:ns lg-ev)
       (if (empty? (:ns lg-ev)) "" "/")
       (:type lg-ev)
-      ;; The line number if we have one:
-      (if-let [lnum (:line (:meta lg-ev))] (str ":" lnum) "")
+      (if-some [lnum (:line (:meta lg-ev))] (str ":" lnum) "")
       ;; We can't dered DB here to get the formatter
       ;; or reagent will re-render everything always
       (format-time (:time lg-ev))))
@@ -187,8 +185,12 @@
   ;; log call. It might also catch the local bindings so we print them here.
   (when-some [meta (:meta lg-ev)]
     (.group js/console "Meta Data")
-    ;;(some->> (:line meta) (.log js/console "Line-num: %d"))
     (some->> (:file meta) (.log js/console "Filename: %s"))
+    (when-some [trace (:trace meta)]
+      (js/console.log "TRACE:")
+      ;; We CANNOT add other text to the following log call since otherwise
+      ;; the trace will not be source mapped properly and we'll end up with JS source links.
+      (js/console.log trace))
     (when-some [env (seq (:env meta))]
       ;; 3rd level nested group. Oh yeah
       (js/console.group "Local Bindings")
@@ -196,7 +198,7 @@
         (.log js/console "%s : %o" (pr-str k) v))
       (js/console.groupEnd))
     ;; The rest of the meta info, not sure if this should ever happen:
-    (when-some [meta' (seq (dissoc meta :file :line :env))]
+    (when-some [meta' (seq (dissoc meta :file :line :env :trace))]
       (doseq [[k v] meta']
         (js/console.log "%s : %o" (pr-str k) v)))
     (js/console.groupEnd))
@@ -206,7 +208,9 @@
   ;; our console. Probably better than always calling dir
   (doseq [v (:msg lg-ev)]
     ;; truncate adds the elippsis...
-    (js/console.log "%O --- %s" v (-> v pr-str (gstring/truncate 20))))
+    (if (string? v)
+      (js/console.log "%o" v)
+      (js/console.log "%o --- %s" v (-> v pr-str (gstring/truncate 20)))))
   (js/console.groupEnd))
 
 (defn severity->color
@@ -425,6 +429,12 @@
   [n]
   (!! assoc :max-logs n))
 
+(defn possibly-truncate
+  [db]
+  (when-some [num (:max-logs db)]
+    (let [logs (:logs db)]
+      (.splice logs 0 (- (alength logs) num)))))
+
 (def ^:const rAF js/window.requestAnimationFrame)
 (def scheduled? false)
 
@@ -434,11 +444,12 @@
     (set! scheduled? true)
     (rAF
       (fn []
+        (possibly-truncate db)
         (mount (render-overlay) (dom-el))
         (set! scheduled? false)))))
 
 (def ensure-klang-init
-  "TODO: Check if this get's DCE'd: (It should)"
+  "This will get DCE'd!"
   (delay
     (when-not (exists? js/React)
       (js/console.error "Klang: Can't find React. Load by yourself beforehand."))
@@ -446,12 +457,6 @@
     (set-max-logs! 2000)
     (add-watch db :rerender request-rerender!)
     (gstyle/installStyles (css-molokai))))
-
-(defn possibly-truncate
-  [db]
-  (when-some [num (:max-logs db)]
-    (let [logs (:logs db)]
-      (.splice logs 0 (- (alength logs) num)))))
 
 (defn add-log!
   "This is the main log functions:
@@ -470,12 +475,13 @@
                        :type (name severity)
                        :meta meta ;; Potentially nil
                        :msg msg})
-    (possibly-truncate db)
-    (request-rerender!)))
+    (request-rerender!)
+    (if (pos? (count msg))
+      (last msg)
+      msg0)))
 
 (defn clear!
   "Clears all logs"
   []
   (set! (:logs @db) -length 0)
   (request-rerender!))
-
