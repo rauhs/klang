@@ -88,7 +88,8 @@
                           (config-map-from-file)
                           (config-map-from-configurer)
                           (config-map-from-props))]
-           (prn "Klang.core logging config: " cfg)
+           (print "// klang.core logging config: ")
+           (prn cfg)
            cfg))
 
 (defn- ns-match?
