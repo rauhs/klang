@@ -154,16 +154,6 @@ decides if the log call should be emitted.
 - `:whitelist`/`:blacklist`: A regular expression that can whitelist/blacklist
 log calls. It gets matched to the string: `the-namespace/the-severity`.
 
-## Example development config
-
-I recommend setting `klang.trace` to true:
-
-```clj
-"-Dklang.trace=true"
-```
-
-This will attach a stacktrace to every log call.
-
 ## Example production config:
 
 Put this somewhere in `resources/config/klang.edn` for example:
@@ -178,7 +168,7 @@ Put this somewhere in `resources/config/klang.edn` for example:
  :trace? false}
  ```
  
- And set: `
+ And set:
 ```clj
 "-Dklang.config-file=config/klang.edn"
 ```
@@ -190,6 +180,8 @@ One simple hack is to:
 
 - Create a new folder like `env/prod/src`
 - Add the above folder to the `src` directory **only for production builds**
+  (EG. leiningen `{:profiles {:cljs-prod {:sources-paths ["env/prod/src", "src/cljs"]}}}`
+  Then compile with `lein with-profile cljs-prod ....`.
 - Create a file `env/prod/src/klang/core.cljs` in which you define your production
   logger:
 ```clj
