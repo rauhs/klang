@@ -20,6 +20,8 @@ Simple logging library for clojurescript.
   object). This allows you to inspect the object and even log functions and
   invoke them in your javascript console. See the demo.
   Also works great with [Devtools](https://github.com/binaryage/cljs-devtools)
+* Attach a full stacktrace to every log call (dumped to the console and clickable
+  in Chrome!).
 
 # Motivation
 By now (2015) the javascript and clojurescript community seems to have arrived
@@ -101,7 +103,7 @@ Klang gets configures by a single map. The default map is the following:
 ```
 
 You can change the behaviour of the macroexpansion of Klang by configuring it in
-various ways.  All involve setting a Java system property.
+two ways.  All involve setting a Java system property.
 Which you can set in leiningen like so:
 
 ```clj
@@ -129,7 +131,7 @@ The options mean:
 macro emit the proper call (or not if it's elided). 
 The arguments of the `logger-fn` are:
 
-1. `ns`, the namespace string
+1. `ns`, the namespace string, possibly shortened.
 2. `severity`, the serverity as a string (like `"INFO"`, `"WARN"`)
 3. `& args`, the rest of the message.
 
@@ -151,6 +153,50 @@ decides if the log call should be emitted.
 
 - `:whitelist`/`:blacklist`: A regular expression that can whitelist/blacklist
 log calls. It gets matched to the string: `the-namespace/the-severity`.
+
+## Example development config
+
+I recommend setting `klang.trace` to true:
+
+```clj
+"-Dklang.trace=true"
+```
+
+This will attach a stacktrace to every log call.
+
+## Example production config:
+
+Put this somewhere in `resources/config/klang.edn` for example:
+
+```
+{:logger-fn your.ns/production-logger
+ :form-meta #{}
+ :compact-ns? true
+ :meta-env? false
+ :default-emit? false
+ :whitelist "*/(ERRO|FATA|WARN|CRIT)"
+ :trace? false}
+ ```
+ 
+ And set: `
+```clj
+"-Dklang.config-file=config/klang.edn"
+```
+
+*NOTE*: In order to use the production logger you have to require your CLJS
+namespace in every namespace where you log. This avoids the Clojurescript
+warnings "WARNING: Use of undeclared Var our.logger/prod-logger".
+One simple hack is to:
+
+- Create a new folder like `env/prod/src`
+- Add the above folder to the `src` directory **only for production builds**
+- Create a file `env/prod/src/klang/core.cljs` in which you define your production
+  logger:
+```clj
+(defn log! [ns severity & msg] ...)
+```
+This will avoid the warning. However, even with the warnings your program should
+run just fine (and compile fine by Google Closure compiler).
 
 ## License
 
