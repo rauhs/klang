@@ -7,11 +7,14 @@
   :source-paths ["src/cljs"]
 
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
-                 [org.clojure/clojurescript "0.0-3308" :classifier "aot" :scope "provided"]
+                 [org.clojure/clojurescript "1.9.229" :classifier "aot" :scope "provided"]
+                 [com.cognitect/transit-clj "0.8.300" :scope "provided"]
+                 [figwheel-sidecar "0.5.10" :scope "provided"]
                  [cljsjs/highlight "8.4-0"]]
 
   :repositories [["clojars" {:sign-releases false}]]
-  :plugins [[lein-cljsbuild "1.0.4"]
+  :plugins [[lein-cljsbuild "1.1.4"]
+            [lein-figwheel "0.5.13"]
             [lein-environ "1.0.0"]
             [lein-ring "0.9.1"]]
   
@@ -29,7 +32,8 @@
 
   :cljsbuild
   {:builds
-   {:app {:source-paths ["src/cljs"]
+   {:app {:source-paths ["src/cljs" "demo"]
+          :figwheel true
           :compiler {:output-to     "resources/public/js/app.js"
                      :output-dir    "resources/public/js/out"
                      :asset-path   "js/out"
