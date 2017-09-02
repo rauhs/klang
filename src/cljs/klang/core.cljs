@@ -141,7 +141,7 @@
                             nil
                             id-counter))))
 
-(defn show!
+(defn toggle-showing!
   "Makes the overlay show/hide. Toggle on no param"
   ([]
    (!! update :showing? not))
@@ -408,21 +408,38 @@
 }")
 
 
-(defn install-shortcut!
+(defn install-toggle-shortcut!
   "Installs a Keyboard Shortcut handler that show/hide the log overlay.
    Call the return function to unregister."
   [shortcut]
   ;; If previous one exist just unregister it:
-  (when-some [prev (:shortcut-keys @db)]
+  (when-some [prev (:shortcut-toggle-keys @db)]
     (prev))
   (let [handler (KeyboardShortcutHandler. js/window)]
     (.registerShortcut handler "klang.toggle" shortcut)
     (gevents/listen
       handler
       KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
-      (fn [e] (show!)))
+      (fn [e] (toggle-showing!)))
     (js/console.info "Klang: Keyboard shortcut installed:" shortcut)
+    (!! assoc :shortcut-toggle-keys #(.unregisterShortcut handler shortcut))))
+
+(defn install-hide-shortcut!
+  "Installs a Keyboard Shortcut handler that hides the log overlay.
+    Call the return function to unregister."
+  [shortcut]
+  ;; If previous one exist just unregister it:
+  (when-some [prev (:shortcut-hide-keys @db)]
+    (prev))
+  (let [handler (KeyboardShortcutHandler. js/window)]
+    (.registerShortcut handler "klang.hide" shortcut)
+    (gevents/listen
+      handler
+      KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
+      (fn [e] (toggle-showing! false)))
+    (js/console.info "Klang: Keyboard hide shortcut installed:" shortcut)
     (!! assoc :shortcut-keys #(.unregisterShortcut handler shortcut))))
+    
 
 (defn set-max-logs!
   "Only keep the last n logs. If nil: No truncating."
@@ -453,7 +470,8 @@
   (delay
     (when-not (exists? js/React)
       (js/console.error "Klang: Can't find React. Load by yourself beforehand."))
-    (install-shortcut! "m")
+    (install-toggle-shortcut! "m")
+    (install-hide-shortcut! "ESC")
     (set-max-logs! 2000)
     (add-watch db :rerender request-rerender!)
     (gstyle/installStyles (css-molokai))))
