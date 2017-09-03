@@ -1,18 +1,9 @@
 (ns klang.dev
-  (:require [cemerick.piggieback :as piggieback]
-            [weasel.repl.websocket :as weasel]
-            [leiningen.core.main :as lein]))
+  (:use [figwheel-sidecar.repl-api :as ra]))
 
-;; Usually started from the nREPL
-(defn browser-repl []
-  (piggieback/cljs-repl
-   :repl-env
-   (weasel/repl-env
-    :ip "localhost"
-    :port 9001)))
+(defn start []
+  (ra/start-figwheel!)
+  (ra/cljs-repl "dev"))
 
-;; Usually already started in a separate JVM with "lein figwheel"
-(defn start-figwheel []
-  (future
-    (print "Starting figwheel.\n")
-    (lein/-main ["figwheel"])))
+(defn stop []
+  (ra/stop-figwheel!))

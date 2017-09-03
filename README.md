@@ -190,6 +190,29 @@ One simple hack is to:
 This will avoid the warning. However, even with the warnings your program should
 run just fine (and compile fine by Google Closure compiler).
 
+## Contribute
+
+Depending on your workflow you can choose to start just figwheel or to first start
+a REPL and start figwheel from there.
+
+### Just figwheel
+```bash
+$ lein figheel
+```
+
+### REPL then figwheel
+You will want to do it this way if you want to jack in with Emacs CIDER or connect
+to the REPL from other tools/editors.
+
+```bash
+$ lein repl
+```
+
+Then at the REPL prompt:
+```
+klang.dev=> (start)
+```
+
 ## License
 
 Copyright &copy; 2015-2017 Andre Rauh. Distributed under the
