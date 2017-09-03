@@ -312,7 +312,6 @@
              (.push aout (render-log-event lg-ev)))))
        aout)))
 
-
 (defn- render-overlay
   "Renders the entire log message overlay in a div when :showing? is true."
   []
@@ -329,16 +328,18 @@
                              :width "calc(100% - 12px)"
                              :justifyContent "center"
                              :display "flex"}}
-        (h "input" #js{:style #js{:background "#000"
-                                  :color "white"
-                                  :width "350px"}
-                       :id "search"
-                       :tabIndex 1
-                       :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                       :autoFocus true
-                       :type "text"
-                       :defaultValue (:search @db "")
-                       :placeholder "Search"})
+        (if (:showing? @db)
+          (h "input" #js{:style #js{:background "#000"
+                                    :color "white"
+                                    :width "350px"}
+                         :id "klang-search"
+                         :tabIndex 1
+                         :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                         :autoFocus true
+                         :type "text"
+                         :defaultValue (:search @db "")
+                         :placeholder "Search"})
+          (h "span"))
         (h "button" #js{:style #js{:cursor "pointer"
                                    :color (if (:frozen-at @db) "orange" "green")}
                         :onClick #(toggle-freeze)}
