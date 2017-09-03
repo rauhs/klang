@@ -339,7 +339,7 @@
                          :type "text"
                          :defaultValue (:search @db "")
                          :placeholder "Search"})
-          (h "span"))
+          (h "span" #js{}))
         (h "button" #js{:style #js{:cursor "pointer"
                                    :color (if (:frozen-at @db) "orange" "green")}
                         :onClick #(toggle-freeze)}
