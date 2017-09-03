@@ -332,7 +332,10 @@
         (h "input" #js{:style #js{:background "#000"
                                   :color "white"
                                   :width "350px"}
+                       :id "search"
+                       :tabIndex 1
                        :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                       :autoFocus true
                        :type "text"
                        :defaultValue (:search @db "")
                        :placeholder "Search"})
@@ -409,7 +412,7 @@
 
 
 (defn install-toggle-shortcut!
-  "Installs a Keyboard Shortcut handler that show/hide the log overlay.
+  "Installs a Keyboard Shortcut handler that toggles the visibility of the log overlay.
    Call the return function to unregister."
   [shortcut]
   ;; If previous one exist just unregister it:
@@ -421,7 +424,7 @@
       handler
       KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
       (fn [e] (toggle-showing!)))
-    (js/console.info "Klang: Keyboard shortcut installed:" shortcut)
+    (js/console.info "Klang: Toggle overlay keyboard shortcut installed:" shortcut)
     (!! assoc :shortcut-toggle-keys #(.unregisterShortcut handler shortcut))))
 
 (defn install-hide-shortcut!
@@ -437,9 +440,8 @@
       handler
       KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
       (fn [e] (toggle-showing! false)))
-    (js/console.info "Klang: Keyboard hide shortcut installed:" shortcut)
-    (!! assoc :shortcut-keys #(.unregisterShortcut handler shortcut))))
-    
+    (js/console.info "Klang: Hide overlay keyboard shortcut installed:" shortcut)
+    (!! assoc :shortcut-hide-keys #(.unregisterShortcut handler shortcut))))
 
 (defn set-max-logs!
   "Only keep the last n logs. If nil: No truncating."
