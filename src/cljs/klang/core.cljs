@@ -141,7 +141,7 @@
                             nil
                             id-counter))))
 
-(defn show!
+(defn toggle-showing!
   "Makes the overlay show/hide. Toggle on no param"
   ([]
    (!! update :showing? not))
@@ -312,7 +312,6 @@
              (.push aout (render-log-event lg-ev)))))
        aout)))
 
-
 (defn- render-overlay
   "Renders the entire log message overlay in a div when :showing? is true."
   []
@@ -329,13 +328,18 @@
                              :width "calc(100% - 12px)"
                              :justifyContent "center"
                              :display "flex"}}
-        (h "input" #js{:style #js{:background "#000"
-                                  :color "white"
-                                  :width "350px"}
-                       :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                       :type "text"
-                       :defaultValue (:search @db "")
-                       :placeholder "Search"})
+        (if (:showing? @db)
+          (h "input" #js{:style #js{:background "#000"
+                                    :color "white"
+                                    :width "350px"}
+                         :id "klang-search"
+                         :tabIndex 1
+                         :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                         :autoFocus true
+                         :type "text"
+                         :defaultValue (:search @db "")
+                         :placeholder "Search"})
+          (h "span" #js{}))
         (h "button" #js{:style #js{:cursor "pointer"
                                    :color (if (:frozen-at @db) "orange" "green")}
                         :onClick #(toggle-freeze)}
@@ -408,21 +412,37 @@
 }")
 
 
-(defn install-shortcut!
-  "Installs a Keyboard Shortcut handler that show/hide the log overlay.
+(defn install-toggle-shortcut!
+  "Installs a Keyboard Shortcut handler that toggles the visibility of the log overlay.
    Call the return function to unregister."
   [shortcut]
   ;; If previous one exist just unregister it:
-  (when-some [prev (:shortcut-keys @db)]
+  (when-some [prev (:shortcut-toggle-keys @db)]
     (prev))
   (let [handler (KeyboardShortcutHandler. js/window)]
     (.registerShortcut handler "klang.toggle" shortcut)
     (gevents/listen
       handler
       KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
-      (fn [e] (show!)))
-    (js/console.info "Klang: Keyboard shortcut installed:" shortcut)
-    (!! assoc :shortcut-keys #(.unregisterShortcut handler shortcut))))
+      (fn [e] (toggle-showing!)))
+    (js/console.info "Klang: Toggle overlay keyboard shortcut installed:" shortcut)
+    (!! assoc :shortcut-toggle-keys #(.unregisterShortcut handler shortcut))))
+
+(defn install-hide-shortcut!
+  "Installs a Keyboard Shortcut handler that hides the log overlay.
+    Call the return function to unregister."
+  [shortcut]
+  ;; If previous one exist just unregister it:
+  (when-some [prev (:shortcut-hide-keys @db)]
+    (prev))
+  (let [handler (KeyboardShortcutHandler. js/window)]
+    (.registerShortcut handler "klang.hide" shortcut)
+    (gevents/listen
+      handler
+      KeyboardShortcutHandler.EventType.SHORTCUT_TRIGGERED
+      (fn [e] (toggle-showing! false)))
+    (js/console.info "Klang: Hide overlay keyboard shortcut installed:" shortcut)
+    (!! assoc :shortcut-hide-keys #(.unregisterShortcut handler shortcut))))
 
 (defn set-max-logs!
   "Only keep the last n logs. If nil: No truncating."
@@ -453,7 +473,8 @@
   (delay
     (when-not (exists? js/React)
       (js/console.error "Klang: Can't find React. Load by yourself beforehand."))
-    (install-shortcut! "m")
+    (install-toggle-shortcut! "m")
+    (install-hide-shortcut! "ESC")
     (set-max-logs! 2000)
     (add-watch db :rerender request-rerender!)
     (gstyle/installStyles (css-molokai))))
