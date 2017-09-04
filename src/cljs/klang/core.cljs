@@ -20,7 +20,8 @@
     [goog.object :as gobj]
     [goog.string :as gstring]
     [goog.string.format]
-    [goog.style :as gstyle])
+    [goog.style :as gstyle]
+    [goog.dom :as dom])
   (:import
     goog.ui.KeyboardShortcutHandler))
 
@@ -62,7 +63,7 @@
 (defn possibly-set-lifecycle!
   "This is all done for performance... Smaller and more used functions can easier get optimized."
   [spec name f]
-  (when-not (empty? f)
+  (when-not (nil? f)
     (gobj/set spec name f))
   nil)
 
@@ -312,6 +313,25 @@
              (.push aout (render-log-event lg-ev)))))
        aout)))
 
+(def render-search-box
+  (component #js{:name "KlangSearch"
+                 :key-fn (fn [props] (:id props))
+                 :did-mount (fn [state]
+                              (let [el (dom/getElement "klang-search")]
+                                (.select el))
+                              state)}
+             (fn [default-value]
+               (h "input" #js{:style #js{:background "#000"
+                                         :color "white"
+                                         :width "350px"}
+                              :id "klang-search"
+                              :tabIndex 1
+                              :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                              :autoFocus true
+                              :type "text"
+                              :defaultValue default-value
+                              :placeholder "Search"}))))
+
 (defn- render-overlay
   "Renders the entire log message overlay in a div when :showing? is true."
   []
@@ -329,16 +349,7 @@
                              :justifyContent "center"
                              :display "flex"}}
         (if (:showing? @db)
-          (h "input" #js{:style #js{:background "#000"
-                                    :color "white"
-                                    :width "350px"}
-                         :id "klang-search"
-                         :tabIndex 1
-                         :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                         :autoFocus true
-                         :type "text"
-                         :defaultValue (:search @db "")
-                         :placeholder "Search"})
+          (render-search-box (:search @db ""))
           (h "span" #js{}))
         (h "button" #js{:style #js{:cursor "pointer"
                                    :color (if (:frozen-at @db) "orange" "green")}
