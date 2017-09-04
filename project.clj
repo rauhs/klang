@@ -4,7 +4,17 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
-  :source-paths ["src/cljs"]
+  :source-paths ["src/cljs" "env/dev/clj"]
+
+  :profiles {:dev
+              {:source-paths ["env/dev/clj"]
+               :dependencies [[figwheel-sidecar "0.5.4-6" :exclusions [org.clojure/clojure]]
+                              [com.cemerick/piggieback "0.2.2" :exclusions [org.clojure/clojure]]
+                              [org.clojure/tools.nrepl "0.2.10"]]
+               :repl-options {:nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]
+                              :init-ns klang.dev
+                              :welcome (println "\nWelcome! I'm happy you want to contribute to Klang!\nCall (start) to fire up figwheel.")}}}
+
 
   :dependencies [[org.clojure/clojure "1.8.0" :scope "provided"]
                  [org.clojure/clojurescript "1.9.229" :classifier "aot" :scope "provided"]
@@ -32,7 +42,7 @@
 
   :cljsbuild
   {:builds
-   {:app {:source-paths ["src/cljs" "demo"]
+   {:dev {:source-paths ["src/cljs" "demo"]
           :figwheel true
           :compiler {:output-to     "resources/public/js/app.js"
                      :output-dir    "resources/public/js/out"
@@ -65,7 +75,7 @@
                       :optimizations :advanced
                       :pretty-print  false}}}}
 
-   :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main" #"\.swp" #"templates"]
+  :jar-exclusions     [#"resources" #"demo" #"docs" #"env" #"public" #"test" #"main" #"\.swp" #"templates"]
    :uberjar {:hooks [leiningen.cljsbuild]
              ;;:hooks [leiningen.cljsbuild]
              ;;:env {:production true}
