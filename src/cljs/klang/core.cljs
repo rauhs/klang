@@ -19,6 +19,7 @@
     [goog.events :as gevents]
     [goog.object :as gobj]
     [goog.string :as gstring]
+    [goog.string.format]
     [goog.style :as gstyle])
   (:import
     goog.ui.KeyboardShortcutHandler))
