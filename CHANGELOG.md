@@ -1,4 +1,10 @@
 
+# 0.5.9
+- Automatically select search input on overlay show. (Thanks @PEZ)
+
+# 0.5.8
+- ESC closes overlay. (Thanks @PEZ)
+
 # 0.5.5
 
 - Trace now works properly. Will jump to the CLJS source-mapped files. 
