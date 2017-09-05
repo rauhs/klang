@@ -19,9 +19,7 @@
     [goog.events :as gevents]
     [goog.object :as gobj]
     [goog.string :as gstring]
-    [goog.string.format]
-    [goog.style :as gstyle]
-    [goog.dom :as dom])
+    [goog.style :as gstyle])
   (:import
     goog.ui.KeyboardShortcutHandler))
 
@@ -314,23 +312,24 @@
        aout)))
 
 (def render-search-box
-  (component #js{:name "KlangSearch"
-                 :key-fn (fn [props] (:id props))
-                 :did-mount (fn [state]
-                              (let [el (dom/getElement "klang-search")]
-                                (.select el))
-                              state)}
-             (fn [default-value]
-               (h "input" #js{:style #js{:background "#000"
-                                         :color "white"
-                                         :width "350px"}
-                              :id "klang-search"
-                              :tabIndex 1
-                              :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                              :autoFocus true
-                              :type "text"
-                              :defaultValue default-value
-                              :placeholder "Search"}))))
+  (let [search-box-id "klang-search"]
+    (component #js{:name "KlangSearch"
+                   :key-fn (fn [props] (:id props))
+                   :did-mount (fn [state]
+                                (let [el (js/document.getElementById search-box-id)]
+                                  (.select el))
+                                state)}
+               (fn [default-value]
+                 (h "input" #js{:style #js{:background "#000"
+                                           :color "white"
+                                           :width "350px"}
+                                :id search-box-id
+                                :tabIndex 1
+                                :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                                :autoFocus true
+                                :type "text"
+                                :defaultValue default-value
+                                :placeholder "Search"})))))
 
 (defn- render-overlay
   "Renders the entire log message overlay in a div when :showing? is true."
