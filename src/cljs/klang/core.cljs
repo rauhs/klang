@@ -323,7 +323,7 @@
                                   :id search-box-id
                                   :tabIndex 1
                                   :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                                  :autoFocus true
+                                  :autoFocus @autofocus?
                                   :type "text"
                                   :defaultValue default-value
                                   :placeholder "Search"}))))))

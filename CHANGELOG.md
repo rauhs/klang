@@ -1,3 +1,6 @@
+# 0.5.13
+- Allow autofocus to switch off.
+
 # 0.5.11
 - Tiny bugfix
 
