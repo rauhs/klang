@@ -30,6 +30,8 @@
                    :logs #js[]
                    :frozen-at nil}))
 
+(def autofocus? (atom true))
+
 (defn !!
   [& args]
   (apply swap! db args))
@@ -310,8 +312,9 @@
       (component #js{:name "KlangSearch"
                      :key-fn (fn [props] (:id props))
                      :did-mount (fn [state]
-                                  (let [el (js/document.getElementById search-box-id)]
-                                    (.select el))
+                                  (when @autofocus?
+                                    (let [el (js/document.getElementById search-box-id)]
+                                      (.select el)))
                                   state)}
                  (fn [default-value]
                    (h "input" #js{:style #js{:background "#000"
