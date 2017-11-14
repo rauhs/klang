@@ -47,7 +47,8 @@
           (js/document.body.appendChild newdom)
           newdom))))
 
-(def h js/React.createElement)
+(defn h [& args]
+  (.apply js/React.createElement js/React.createElement (into-array args)))
 
 (defn possibly-set-lifecycle!
   "This is all done for performance... Smaller and more used functions can easier get optimized."

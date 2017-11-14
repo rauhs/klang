@@ -1,5 +1,7 @@
-# 0.5.10
+# 0.5.11
+- Tiny bugfix
 
+# 0.5.10
 - Don't require js/React present during klang.core namespace load
 
 # 0.5.9
