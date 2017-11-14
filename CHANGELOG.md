@@ -1,3 +1,6 @@
+# 0.5.10
+
+- Don't require js/React present during klang.core namespace load
 
 # 0.5.9
 - Automatically select search input on overlay show. (Thanks @PEZ)
