@@ -39,7 +39,7 @@
 (defn dom-el
   "Ensures there is a div element in the body and returns it."
   []
-  (let [domid "__klang2__id__"
+  (let [domid "__klang__id__"
         domel (js/document.getElementById domid)]
     (or domel
         (let [newdom (doto (js/document.createElement "div")
@@ -47,17 +47,7 @@
           (js/document.body.appendChild newdom)
           newdom))))
 
-(defn add-array
-  [ary xs]
-  (reduce (fn [ary x] (.push ary x) ary)
-          ary xs)
-  ary)
-
-(defn h
-  "Helper for creating dom elements."
-  [tag props & children]
-  (.apply js/React.createElement js/React.createElement
-          (add-array #js[tag props] children)))
+(def h js/React.createElement)
 
 (defn possibly-set-lifecycle!
   "This is all done for performance... Smaller and more used functions can easier get optimized."
@@ -248,21 +238,22 @@
 
 (def render-log-event
   "Renders a single log message."
-  (component
-    #js{:name "LogEvent"
-        :key-fn (fn [props] (:id props))
-        :should-update #(-> false)}
-    (fn [{:keys [time ns type msg] :as lg-ev}]
-      (h "li" #js{:style #js{:listStyleType "none"}}
-         (format-time time)
-         " "
-         ns
-         (when-not (empty? ns) "/")
-         (h "span" #js{:style #js{:color (severity->color type)}} type)
-         " "
-         (h "span" #js{:style #js{:cursor "pointer"}
-                       :onClick #(dump-to-console! lg-ev)}
-            (render-msg msg))))))
+  (delay
+    (component
+      #js{:name "LogEvent"
+          :key-fn (fn [props] (:id props))
+          :should-update #(-> false)}
+      (fn [{:keys [time ns type msg] :as lg-ev}]
+        (h "li" #js{:style #js{:listStyleType "none"}}
+           (format-time time)
+           " "
+           ns
+           (when-not (empty? ns) "/")
+           (h "span" #js{:style #js{:color (severity->color type)}} type)
+           " "
+           (h "span" #js{:style #js{:cursor "pointer"}
+                         :onClick #(dump-to-console! lg-ev)}
+              (render-msg msg)))))))
 
 (defn search-filter-fn
   "Returns a transducer that filters given the log messages according to the
@@ -309,28 +300,29 @@
        (dotimes [i last-to-start]
          (let [lg-ev (aget logs (- last-to-start i 1))]
            (when ^boolean (filter-fn lg-ev)
-             (.push aout (render-log-event lg-ev)))))
+             (.push aout (@render-log-event lg-ev)))))
        aout)))
 
 (def render-search-box
-  (let [search-box-id "klang-search"]
-    (component #js{:name "KlangSearch"
-                   :key-fn (fn [props] (:id props))
-                   :did-mount (fn [state]
-                                (let [el (js/document.getElementById search-box-id)]
-                                  (.select el))
-                                state)}
-               (fn [default-value]
-                 (h "input" #js{:style #js{:background "#000"
-                                           :color "white"
-                                           :width "350px"}
-                                :id search-box-id
-                                :tabIndex 1
-                                :onChange (fn [e] (!! assoc :search (.. e -target -value)))
-                                :autoFocus true
-                                :type "text"
-                                :defaultValue default-value
-                                :placeholder "Search"})))))
+  (delay
+    (let [search-box-id "klang-search"]
+      (component #js{:name "KlangSearch"
+                     :key-fn (fn [props] (:id props))
+                     :did-mount (fn [state]
+                                  (let [el (js/document.getElementById search-box-id)]
+                                    (.select el))
+                                  state)}
+                 (fn [default-value]
+                   (h "input" #js{:style #js{:background "#000"
+                                             :color "white"
+                                             :width "350px"}
+                                  :id search-box-id
+                                  :tabIndex 1
+                                  :onChange (fn [e] (!! assoc :search (.. e -target -value)))
+                                  :autoFocus true
+                                  :type "text"
+                                  :defaultValue default-value
+                                  :placeholder "Search"}))))))
 
 (defn- render-overlay
   "Renders the entire log message overlay in a div when :showing? is true."
@@ -349,7 +341,7 @@
                              :justifyContent "center"
                              :display "flex"}}
         (if (:showing? @db)
-          (render-search-box (:search @db ""))
+          (@render-search-box (:search @db ""))
           (h "span" #js{}))
         (h "button" #js{:style #js{:cursor "pointer"
                                    :color (if (:frozen-at @db) "orange" "green")}
